@@ -1,0 +1,11 @@
+{
+  "extends": "@hew/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2021"
+  },
+  "include": ["src"]
+}

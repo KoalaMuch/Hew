@@ -1,0 +1,28 @@
+# ─── deps ───────────────────────────────────────────────
+FROM node:20-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/db/package.json packages/shared/package.json ./packages/
+COPY packages/config/tsconfig/package.json packages/config/eslint/package.json ./packages/config/
+RUN pnpm install --frozen-lockfile
+
+# ─── build ──────────────────────────────────────────────
+FROM deps AS build
+COPY . .
+RUN pnpm db:generate
+RUN pnpm turbo build --filter=@hew/api
+
+# ─── runtime ────────────────────────────────────────────
+FROM node:20-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+# Expected env vars: DATABASE_URL, REDIS_URL
+COPY --from=build /app/apps/api/dist ./dist
+COPY --from=build /app/apps/api/package.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages ./packages
+COPY --from=build /app/packages/db/prisma ./packages/db/prisma
+EXPOSE 3000
+CMD ["node", "dist/main.js"]

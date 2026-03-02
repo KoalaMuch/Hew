@@ -1,0 +1,34 @@
+# Caddyfile for Hew (หิ้ว)
+# Place this at /etc/caddy/Caddyfile on your VPS
+# Then restart Caddy: systemctl restart caddy
+
+# Main domain - serves the Next.js web app
+yourdomain.com {
+    reverse_proxy web:3001 {
+        health_uri /api/health
+        health_interval 30s
+    }
+    
+    # Logging
+    log {
+        output file /var/log/caddy/hew-web.log
+    }
+}
+
+# API subdomain (optional - if you want separate API domain)
+api.yourdomain.com {
+    reverse_proxy api:3000 {
+        health_uri /api/health
+        health_interval 30s
+    }
+    
+    # Logging
+    log {
+        output file /var/log/caddy/hew-api.log
+    }
+}
+
+# If you don't have a domain yet, use HTTP only (not recommended for production)
+# :80 {
+#     reverse_proxy web:3001
+# }

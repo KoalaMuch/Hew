@@ -1,0 +1,92 @@
+export enum OrderStatus {
+  CREATED = "CREATED",
+  ESCROW_PENDING = "ESCROW_PENDING",
+  PAID = "PAID",
+  PURCHASING = "PURCHASING",
+  SHIPPED = "SHIPPED",
+  DELIVERED = "DELIVERED",
+  PAYOUT_RELEASED = "PAYOUT_RELEASED",
+  COMPLETED = "COMPLETED",
+  DISPUTED = "DISPUTED",
+  RESOLVED_BUYER = "RESOLVED_BUYER",
+  RESOLVED_TRAVELER = "RESOLVED_TRAVELER",
+  REFUNDED = "REFUNDED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum EscrowStatus {
+  PENDING = "PENDING",
+  FUNDED = "FUNDED",
+  RELEASED = "RELEASED",
+  REFUNDED = "REFUNDED",
+  DISPUTED = "DISPUTED",
+  FAILED = "FAILED",
+}
+
+export enum OfferStatus {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  REJECTED = "REJECTED",
+  EXPIRED = "EXPIRED",
+}
+
+export enum TripStatus {
+  ACTIVE = "ACTIVE",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum ItemRequestStatus {
+  OPEN = "OPEN",
+  MATCHED = "MATCHED",
+  CLOSED = "CLOSED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum ShipmentStatus {
+  PENDING = "PENDING",
+  SHIPPED = "SHIPPED",
+  DELIVERED = "DELIVERED",
+  FAILED = "FAILED",
+}
+
+export enum PayoutStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
+}
+
+export enum DisputeStatus {
+  OPEN = "OPEN",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  EVIDENCE_REQUESTED = "EVIDENCE_REQUESTED",
+  RESOLVED_BUYER = "RESOLVED_BUYER",
+  RESOLVED_TRAVELER = "RESOLVED_TRAVELER",
+  CLOSED = "CLOSED",
+}
+
+export enum UserRole {
+  USER = "USER",
+  ADMIN = "ADMIN",
+}
+
+export enum KycStatus {
+  NONE = "NONE",
+  PENDING = "PENDING",
+  VERIFIED = "VERIFIED",
+  REJECTED = "REJECTED",
+}
+
+export enum MessageType {
+  TEXT = "TEXT",
+  IMAGE = "IMAGE",
+  OFFER_CARD = "OFFER_CARD",
+  SYSTEM = "SYSTEM",
+}
+
+export interface BankAccount {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}

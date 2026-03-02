@@ -1,0 +1,24 @@
+{
+  "name": "@hew/worker",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hew/db": "workspace:*",
+    "@hew/shared": "workspace:*",
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.4.0",
+    "pino": "^9.0.0"
+  },
+  "devDependencies": {
+    "@hew/tsconfig": "workspace:*",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0"
+  }
+}
