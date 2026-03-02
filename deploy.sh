@@ -30,8 +30,8 @@ fi
 
 ln -sf .env.production .env
 
-echo -e "${YELLOW}📦 Building Docker images...${NC}"
-docker compose -f docker-compose.prod.yml build
+echo -e "${YELLOW}📦 Pulling Docker images from GHCR...${NC}"
+docker compose -f docker-compose.prod.yml pull
 
 echo -e "${YELLOW}🔄 Running database migrations...${NC}"
 # Wait for postgres to be ready

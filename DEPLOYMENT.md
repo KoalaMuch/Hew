@@ -178,11 +178,9 @@ chmod +x deploy.sh
 ```
 
 This will:
-1. Build Docker images (API, Web, Worker)
+1. Pull pre-built Docker images from GHCR (API, Web, Worker)
 2. Run database migrations
 3. Start all services (PostgreSQL, Redis, API, Web, Worker)
-
-First build may take 5-10 minutes.
 
 ---
 
@@ -223,6 +221,17 @@ In your Cloudflare dashboard for rubhew.com:
 ---
 
 ## Updating the Application
+
+### Option A: Automated (GitHub Actions)
+
+Go to the repository on GitHub:
+1. Navigate to **Actions** > **Deploy to VPS**
+2. Click **Run workflow**
+3. The workflow will verify CI has passed and then deploy automatically
+
+The deploy workflow will SSH into the VPS, pull the latest code and pre-built images from GHCR, run migrations, and restart services.
+
+### Option B: Manual (SSH)
 
 ```bash
 cd /opt/hew
@@ -329,6 +338,32 @@ Add to cron (runs daily at 2 AM):
 - [ ] HTTPS enabled via Caddy
 - [ ] Database and Redis not exposed to internet
 - [ ] Regular backups configured
+
+---
+
+## CI/CD Setup (GitHub Actions)
+
+Docker images are built and pushed to GitHub Container Registry (GHCR) automatically when CI passes on the `main` branch. A separate **Deploy to VPS** workflow can be triggered manually to pull images and deploy.
+
+### Required GitHub Repository Secrets
+
+Set these in **Settings > Secrets and variables > Actions**:
+
+| Secret | Description |
+|---|---|
+| `VPS_HOST` | Vultr VPS IP address |
+| `VPS_SSH_KEY` | Private SSH key content (`~/.ssh/hew_ed25519`) |
+| `VPS_USER` | SSH username (default: `linuxuser`) |
+
+`GITHUB_TOKEN` is used automatically for GHCR authentication in CI -- no additional token is needed.
+
+If the repository is **private**, the VPS also needs to authenticate with GHCR to pull images. SSH into the VPS and run:
+
+```bash
+echo "<GHCR_PAT>" | docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
+```
+
+Use a GitHub Personal Access Token with `read:packages` scope. This only needs to be done once since Docker stores the credentials.
 
 ---
 
