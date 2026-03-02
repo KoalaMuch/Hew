@@ -2,16 +2,17 @@
   "name": "@hew/db",
   "private": true,
   "version": "0.0.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./src/index.ts",
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
+    "build": "tsc",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.0.0",
     "prisma": "^6.0.0",
     "tsx": "^4.0.0",
     "@hew/tsconfig": "workspace:*",

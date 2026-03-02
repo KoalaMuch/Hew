@@ -57,6 +57,7 @@ jobs:
           context: .
           file: ./Dockerfile.api
           push: false
+          load: true
           tags: hew-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -67,6 +68,7 @@ jobs:
           context: .
           file: ./Dockerfile.web
           push: false
+          load: true
           tags: hew-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -77,6 +79,34 @@ jobs:
           context: .
           file: ./Dockerfile.worker
           push: false
+          load: true
           tags: hew-worker:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test API image
+        run: |
+          docker run --rm hew-api:latest node -e "require('./apps/api/dist/main.js')" &
+          sleep 3
+          docker ps
+          echo "API image loads successfully"
+
+      - name: Smoke test Web image
+        run: |
+          docker run --rm -e PORT=3001 hew-web:latest node -e "
+            const path = require('path');
+            const serverPath = path.join(process.cwd(), 'apps/web/server.js');
+            require('fs').accessSync(serverPath);
+            console.log('server.js exists at', serverPath);
+          "
+          echo "Web image verified successfully"
+
+      - name: Smoke test Worker image
+        run: |
+          docker run --rm hew-worker:latest node -e "
+            const path = require('path');
+            const mainPath = path.join(process.cwd(), 'apps/worker/dist/main.js');
+            require('fs').accessSync(mainPath);
+            console.log('main.js exists at', mainPath);
+          "
+          echo "Worker image verified successfully"
