@@ -75,10 +75,8 @@ hew/
 │   ├── db/           # Prisma schema, client, migrations, seed
 │   ├── shared/       # Shared types and utilities
 │   └── config/       # ESLint, TypeScript configs
-├── docker-compose.yml
-├── Dockerfile.api
-├── Dockerfile.web
-├── Dockerfile.worker
+├── docker-compose.prod.yml
+├── Dockerfile
 └── .github/workflows/ci.yml
 ```
 
@@ -106,7 +104,7 @@ hew/
 ## Docker Production Builds
 
 ```bash
-docker build -f Dockerfile.api -t hew-api .
-docker build -f Dockerfile.web -t hew-web .
-docker build -f Dockerfile.worker -t hew-worker .
+docker build --target runtime-api -t hew-api .
+docker build --target runtime-web -t hew-web .
+docker build --target runtime-worker -t hew-worker .
 ```
