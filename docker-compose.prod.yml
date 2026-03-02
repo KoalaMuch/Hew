@@ -64,6 +64,7 @@ services:
       - .env.production
     environment:
       - NODE_ENV=production
+      - PORT=3001
     depends_on:
       - api
     restart: unless-stopped
