@@ -50,6 +50,12 @@ docker compose -f docker-compose.prod.yml run --rm api sh -c \
 echo -e "${YELLOW}🚀 Starting services...${NC}"
 docker compose -f docker-compose.prod.yml up -d
 
+# Record deployment history for rollback reference
+DEPLOYED_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+echo "$DEPLOYED_SHA" > .deployed-sha
+echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') ${DEPLOYED_SHA} $(git log -1 --format='%s' 2>/dev/null || echo '')" >> .deploy-history
+echo -e "${GREEN}📌 Deployed SHA: ${DEPLOYED_SHA}${NC}"
+
 echo -e "${YELLOW}⏳ Waiting for services to be healthy...${NC}"
 sleep 10
 
