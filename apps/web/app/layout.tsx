@@ -46,6 +46,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" className={inter.variable}>
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/__env.js" />
+      </head>
       <body className="min-h-screen font-sans">
         <SessionProvider>
           <div className="flex min-h-screen flex-col">

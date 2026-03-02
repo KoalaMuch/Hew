@@ -52,10 +52,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=build-web /app/apps/web/.next/standalone ./
 COPY --from=build-web /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build-web /app/apps/web/public ./apps/web/public
+COPY apps/web/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3001
 EXPOSE 3001
-CMD ["node", "apps/web/server.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # ─── runtime: worker ────────────────────────────────────
 FROM node:20-alpine AS runtime-worker

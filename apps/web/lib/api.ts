@@ -10,7 +10,17 @@ import type {
   ProfileDto,
 } from '@hew/shared';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const DEV_API_URL = 'http://localhost:3000/api';
+
+function getApiBase(): string {
+  // Server-side: read from runtime env
+  if (typeof window === 'undefined') {
+    return process.env.API_URL || DEV_API_URL;
+  }
+  // Client-side: read from runtime-injected window.__ENV
+  const runtimeUrl = (window as unknown as { __ENV?: { API_URL?: string } }).__ENV?.API_URL;
+  return runtimeUrl || DEV_API_URL;
+}
 
 let sessionToken: string | null = null;
 
@@ -34,7 +44,7 @@ async function fetchApi<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+  const url = path.startsWith('http') ? path : `${getApiBase()}${path}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -320,5 +330,5 @@ export async function logout() {
 }
 
 export function getOAuthUrl(provider: 'google' | 'line' | 'facebook' | 'apple') {
-  return `${API_BASE}/auth/${provider}?session=${sessionToken || ''}`;
+  return `${getApiBase()}/auth/${provider}?session=${sessionToken || ''}`;
 }

@@ -63,6 +63,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      - API_URL=${API_URL:-https://api.rubhew.com/api}
     depends_on:
       - api
     restart: unless-stopped
