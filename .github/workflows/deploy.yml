@@ -43,3 +43,24 @@ jobs:
             cd /opt/hew
             git pull origin main
             ./deploy.sh
+
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for services to stabilize
+        run: sleep 15
+
+      - name: Health check API
+        run: |
+          for i in $(seq 1 10); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.VPS_HEALTH_URL }}" || echo "000")
+            echo "Attempt $i: HTTP $status"
+            if [ "$status" = "200" ]; then
+              echo "Health check passed"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Health check failed after 10 attempts"
+          exit 1

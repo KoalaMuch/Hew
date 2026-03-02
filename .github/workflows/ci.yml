@@ -9,6 +9,32 @@ on:
 jobs:
   lint-typecheck-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: hew_test
+          POSTGRES_PASSWORD: hew_test
+          POSTGRES_DB: hew_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U hew_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://hew_test:hew_test@localhost:5432/hew_test
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
 
@@ -29,14 +55,20 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm --filter @hew/db db:generate
 
+      - name: Run database migrations
+        run: pnpm --filter @hew/db exec prisma migrate deploy
+
       - name: Lint
         run: pnpm lint
 
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Test
+      - name: Unit tests
         run: pnpm test
+
+      - name: Integration tests
+        run: pnpm --filter @hew/api test:integration
 
       - name: Build
         run: pnpm build
