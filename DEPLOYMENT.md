@@ -31,18 +31,14 @@ Use the password from Vultr dashboard (Server > Overview).
 Run these commands on the VPS:
 
 ```bash
-# Update system
 sudo apt-get update && sudo apt-get upgrade -y
 
-# Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 rm get-docker.sh
 
-# Install Docker Compose plugin and Git
 sudo apt-get install -y docker-compose-plugin git
 
-# Add your user to docker group (avoids needing sudo for docker)
 sudo usermod -aG docker linuxuser
 ```
 
@@ -105,40 +101,50 @@ git clone https://github.com/KoalaMuch/Hew.git .
 ```bash
 cd /opt/hew
 cp .env.production.example .env.production
+```
+
+Generate passwords (use `hex` to avoid special characters that break URLs):
+
+```bash
+openssl rand -hex 32
+openssl rand -hex 32
+```
+
+Edit the file:
+
+```bash
 nano .env.production
 ```
 
-Fill in these values:
+Replace the entire content with (no comments, no blank lines):
 
-```bash
-# Generate a strong database password
-openssl rand -base64 32
+```
+POSTGRES_USER=hew_prod
+POSTGRES_PASSWORD=<first hex password>
+POSTGRES_DB=hew_prod
+DATABASE_URL=postgresql://hew_prod:<first hex password>@postgres:5432/hew_prod
+REDIS_URL=redis://redis:6379
+FRONTEND_URL=https://rubhew.com
+PORT=3000
+NODE_ENV=production
+OMISE_PUBLIC_KEY=pkey_test_xxx
+OMISE_SECRET_KEY=skey_test_xxx
+SESSION_SECRET=<second hex password>
 ```
 
-Update `.env.production`:
-
-| Variable | What to set |
-|---|---|
-| `POSTGRES_PASSWORD` | Paste the generated password |
-| `DATABASE_URL` | Replace `CHANGE_ME_STRONG_PASSWORD` with the same password |
-| `FRONTEND_URL` | `https://rubhew.com` |
-| `SESSION_SECRET` | Run `openssl rand -base64 32` again, use a different value |
-| `OMISE_PUBLIC_KEY` | Your key from https://dashboard.omise.co (use test keys for now) |
-| `OMISE_SECRET_KEY` | Your key from https://dashboard.omise.co (use test keys for now) |
-
-Leave `REDIS_URL`, `PORT`, and `NODE_ENV` as their defaults.
+Make sure the password in `POSTGRES_PASSWORD` and `DATABASE_URL` are **exactly the same**.
 
 ---
 
 ## Step 7: Configure Caddy
 
-Caddy runs on the host and proxies requests to Docker containers. Since the containers expose ports on localhost, we need to use `localhost:PORT` instead of Docker service names.
+Replace the default Caddyfile with the Hew config:
 
 ```bash
 sudo nano /etc/caddy/Caddyfile
 ```
 
-Paste this content:
+Delete all existing content and paste:
 
 ```caddyfile
 rubhew.com {
@@ -154,7 +160,7 @@ api.rubhew.com {
 }
 ```
 
-Restart Caddy:
+Enable and restart Caddy:
 
 ```bash
 sudo systemctl enable caddy
@@ -163,34 +169,7 @@ sudo systemctl restart caddy
 
 ---
 
-## Step 8: Expose Docker Ports
-
-The `docker-compose.prod.yml` doesn't expose ports to the host by default. We need to add port mappings so Caddy can reach the containers.
-
-```bash
-cd /opt/hew
-nano docker-compose.prod.yml
-```
-
-Add `ports` to the `api` and `web` services:
-
-Under the `api` service, add:
-```yaml
-    ports:
-      - "127.0.0.1:3000:3000"
-```
-
-Under the `web` service, add:
-```yaml
-    ports:
-      - "127.0.0.1:3001:3001"
-```
-
-These bind to `127.0.0.1` only, so the ports are not exposed to the internet directly — only Caddy can reach them.
-
----
-
-## Step 9: Deploy
+## Step 8: Deploy
 
 ```bash
 cd /opt/hew
@@ -207,7 +186,7 @@ First build may take 5-10 minutes.
 
 ---
 
-## Step 10: Verify Deployment
+## Step 9: Verify Deployment
 
 ```bash
 # Check all services are running
@@ -229,7 +208,7 @@ curl https://api.rubhew.com/api/health
 
 ---
 
-## Step 11: DNS Setup (Cloudflare)
+## Step 10: DNS Setup (Cloudflare)
 
 In your Cloudflare dashboard for rubhew.com:
 
@@ -310,8 +289,9 @@ sudo caddy validate --config /etc/caddy/Caddyfile
 
 ### Containers can't be reached by Caddy
 
-- Make sure `ports` are added in `docker-compose.prod.yml` (see Step 8)
-- Ports should bind to `127.0.0.1` not `0.0.0.0`
+- Port mappings are already configured in `docker-compose.prod.yml`
+- API binds to `127.0.0.1:3000`, Web binds to `127.0.0.1:3001`
+- Verify with: `curl http://localhost:3000/api/health`
 
 ---
 
@@ -341,8 +321,9 @@ Add to cron (runs daily at 2 AM):
 
 ## Security Checklist
 
-- [ ] Strong database password (generated randomly)
-- [ ] Strong session secret (generated randomly)
+- [ ] Strong database password (generated with `openssl rand -hex 32`)
+- [ ] Strong session secret (different from database password)
+- [ ] `.env.production` has no comments (clean key=value format)
 - [ ] Firewall enabled (only ports 22, 80, 443)
 - [ ] Docker ports bound to 127.0.0.1 (not public)
 - [ ] HTTPS enabled via Caddy

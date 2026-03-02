@@ -20,11 +20,12 @@ RUN pnpm turbo build --filter=@hew/api
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-# Expected env vars: DATABASE_URL, REDIS_URL
-COPY --from=build /app/apps/api/dist ./dist
-COPY --from=build /app/apps/api/package.json ./
+COPY --from=build /app/package.json ./
+COPY --from=build /app/pnpm-workspace.yaml ./
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/package.json ./apps/api/
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/packages ./packages
-COPY --from=build /app/packages/db/prisma ./packages/db/prisma
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/api/dist/main.js"]

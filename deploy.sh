@@ -28,7 +28,7 @@ if ! docker compose version &> /dev/null; then
     exit 1
 fi
 
-export $(grep -v '^#' .env.production | xargs)
+ln -sf .env.production .env
 
 echo -e "${YELLOW}📦 Building Docker images...${NC}"
 docker compose -f docker-compose.prod.yml build
@@ -39,6 +39,10 @@ echo "Waiting for PostgreSQL to be ready..."
 sleep 5
 
 # Run migrations using the API container (which has Prisma CLI)
+docker compose -f docker-compose.prod.yml up -d postgres redis
+echo "Waiting for PostgreSQL to be healthy..."
+sleep 10
+
 docker compose -f docker-compose.prod.yml run --rm api sh -c \
   "cd /app/packages/db && npx prisma migrate deploy" || \
   echo "⚠️  Migration failed or already applied. Continuing..."
