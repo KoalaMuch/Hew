@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { SessionProvider } from '@/lib/session-context';
 import { Navbar } from '@/components/navbar';
+import { FrontendObservability } from '@/components/frontend-observability';
 import './globals.css';
 
 const inter = Inter({
@@ -51,6 +52,7 @@ export default function RootLayout({
         <script src="/__env.js" />
       </head>
       <body className="min-h-screen font-sans">
+        <FrontendObservability />
         <SessionProvider>
           <div className="flex min-h-screen flex-col">
             <Navbar />

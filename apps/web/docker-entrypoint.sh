@@ -5,7 +5,8 @@ ENV_FILE="/app/apps/web/public/__env.js"
 
 cat > "$ENV_FILE" <<EOF
 window.__ENV = {
-  API_URL: "${API_URL:-}"
+  API_URL: "${API_URL:-}",
+  FARO_URL: "${FARO_URL:-}"
 };
 EOF
 

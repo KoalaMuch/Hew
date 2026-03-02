@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createOffer } from '@/lib/api';
 import { getErrorMessage } from '@hew/shared';
+import { trackOfferSubmitted } from '@/lib/analytics';
 
 interface OfferFormProps {
   itemRequestId: string;
@@ -29,6 +30,7 @@ export function OfferForm({ itemRequestId }: OfferFormProps) {
         shippingFee: Number(formData.get('shippingFee')),
         notes: (formData.get('notes') as string) || undefined,
       });
+      trackOfferSubmitted(itemRequestId);
       router.refresh();
       form.reset();
     } catch (err) {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plane, ShoppingBag, MapPin, Calendar, Send } from 'lucide-react';
 import { getErrorMessage } from '@hew/shared';
 import { createPost } from '@/lib/api';
+import { trackPostCreated } from '@/lib/analytics';
 
 type PostType = 'RUBHEW' | 'HAKHONG';
 
@@ -35,6 +36,7 @@ export function CreatePostForm() {
         travelDate: travelDate ? new Date(travelDate).toISOString() : undefined,
         budget: budget ? parseFloat(budget) : undefined,
       });
+      trackPostCreated(type);
       router.push('/');
       router.refresh();
     } catch (err) {

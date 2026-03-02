@@ -64,6 +64,7 @@ services:
       - NODE_ENV=production
       - PORT=3001
       - API_URL=${API_URL:-https://api.rubhew.com/api}
+      - FARO_URL=${FARO_URL:-}
     depends_on:
       - api
     restart: unless-stopped
@@ -86,9 +87,86 @@ services:
     networks:
       - hew_network
 
+  # ─── Monitoring Stack ─────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+    networks:
+      - hew_network
+
+  loki:
+    image: grafana/loki:3.1.0
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    restart: unless-stopped
+    networks:
+      - hew_network
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    command: -config.file=/etc/tempo/config.yml
+    volumes:
+      - ./monitoring/tempo/tempo-config.yml:/etc/tempo/config.yml:ro
+      - tempo_data:/var/tempo
+    restart: unless-stopped
+    networks:
+      - hew_network
+
+  alloy:
+    image: grafana/alloy:v1.3.1
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    ports:
+      - "127.0.0.1:12347:12347"
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - POSTGRES_DSN=postgresql://${POSTGRES_USER:-hew_prod}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-hew_prod}
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
+    networks:
+      - hew_network
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "127.0.0.1:3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
+    networks:
+      - hew_network
+
 volumes:
   pgdata:
   redisdata:
+  prometheus_data:
+  loki_data:
+  tempo_data:
+  grafana_data:
 
 networks:
   hew_network:

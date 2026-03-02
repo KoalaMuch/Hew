@@ -1,0 +1,141 @@
+// ─── Faro receiver (frontend telemetry) ─────────────────
+faro.receiver "frontend" {
+  server {
+    listen_address = "0.0.0.0"
+    listen_port    = 12347
+    cors_allowed_origins = ["*"]
+  }
+
+  output {
+    logs   = [loki.write.default.receiver]
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// ─── OTLP receiver (backend telemetry) ──────────────────
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+    logs    = [otelcol.exporter.loki.default.input]
+  }
+}
+
+// ─── PostgreSQL exporter ────────────────────────────────
+prometheus.exporter.postgres "default" {
+  data_source_names = [env("POSTGRES_DSN")]
+}
+
+discovery.relabel "postgres" {
+  targets = prometheus.exporter.postgres.default.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = "hew-postgres"
+  }
+  rule {
+    target_label = "job"
+    replacement  = "integrations/postgres"
+  }
+}
+
+prometheus.scrape "postgres" {
+  targets    = discovery.relabel.postgres.output
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+// ─── cAdvisor (Docker container metrics) ────────────────
+prometheus.exporter.cadvisor "default" {
+  docker_only = true
+}
+
+discovery.relabel "cadvisor" {
+  targets = prometheus.exporter.cadvisor.default.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "integrations/docker"
+  }
+  rule {
+    target_label = "instance"
+    replacement  = "hew-vps"
+  }
+}
+
+prometheus.scrape "cadvisor" {
+  targets    = discovery.relabel.cadvisor.output
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+// ─── Docker container logs ──────────────────────────────
+discovery.docker "containers" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+discovery.relabel "docker_logs" {
+  targets = []
+
+  rule {
+    target_label = "job"
+    replacement  = "integrations/docker"
+  }
+  rule {
+    target_label = "instance"
+    replacement  = "hew-vps"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+}
+
+loki.source.docker "containers" {
+  host             = "unix:///var/run/docker.sock"
+  targets          = discovery.docker.containers.targets
+  forward_to       = [loki.write.default.receiver]
+  relabel_rules    = discovery.relabel.docker_logs.rules
+  refresh_interval = "5s"
+}
+
+// ─── Exporters ──────────────────────────────────────────
+prometheus.remote_write "default" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+otelcol.exporter.loki "default" {
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
