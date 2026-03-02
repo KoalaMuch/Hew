@@ -13,6 +13,8 @@ import { DisputeModule } from "./modules/dispute/dispute.module";
 import { ReviewModule } from "./modules/review/review.module";
 import { NotificationModule } from "./modules/notification/notification.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { PostModule } from "./modules/post/post.module";
+import { AuthModule } from "./modules/auth/auth.module";
 import { PrismaModule } from "./common/prisma.module";
 import { HealthController } from "./common/health.controller";
 
@@ -33,6 +35,8 @@ import { HealthController } from "./common/health.controller";
     ReviewModule,
     NotificationModule,
     AdminModule,
+    PostModule,
+    AuthModule,
   ],
   controllers: [HealthController],
 })

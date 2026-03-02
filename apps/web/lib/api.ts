@@ -207,6 +207,85 @@ export async function createChatRoom(data: {
   });
 }
 
+// Posts
+export async function getPosts(params?: {
+  type?: string;
+  hashtag?: string;
+  search?: string;
+  country?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const search = new URLSearchParams();
+  if (params?.type) search.set('type', params.type);
+  if (params?.hashtag) search.set('hashtag', params.hashtag);
+  if (params?.search) search.set('search', params.search);
+  if (params?.country) search.set('country', params.country);
+  if (params?.page !== undefined) search.set('page', String(params.page));
+  if (params?.limit !== undefined) search.set('limit', String(params.limit));
+  const qs = search.toString();
+  return fetchApi<{ data: unknown[]; total: number }>(
+    `/posts${qs ? `?${qs}` : ''}`
+  );
+}
+
+export async function getPostById(id: string) {
+  return fetchApi<unknown>(`/posts/${id}`);
+}
+
+export async function getMyPosts(params?: { page?: number; limit?: number }) {
+  const search = new URLSearchParams();
+  if (params?.page !== undefined) search.set('page', String(params.page));
+  if (params?.limit !== undefined) search.set('limit', String(params.limit));
+  const qs = search.toString();
+  return fetchApi<{ data: unknown[]; total: number }>(
+    `/posts/mine${qs ? `?${qs}` : ''}`
+  );
+}
+
+export async function createPost(data: {
+  type: 'RUBHEW' | 'HAKHONG';
+  content: string;
+  imageUrls?: string[];
+  country?: string;
+  city?: string;
+  travelDate?: string;
+  budget?: number;
+}) {
+  return fetchApi<unknown>('/posts', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updatePost(
+  id: string,
+  data: {
+    content?: string;
+    imageUrls?: string[];
+    country?: string;
+    city?: string;
+    travelDate?: string;
+    budget?: number;
+  }
+) {
+  return fetchApi<unknown>(`/posts/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deletePost(id: string) {
+  return fetchApi<void>(`/posts/${id}`, { method: 'DELETE' });
+}
+
+export async function getTrendingHashtags(limit?: number) {
+  const qs = limit ? `?limit=${limit}` : '';
+  return fetchApi<Array<{ id: string; name: string; count: number }>>(
+    `/posts/hashtags/trending${qs}`
+  );
+}
+
 // Session
 export async function getSession() {
   return fetchApi<{ id: string; displayName?: string; avatarSeed?: string } | null>(
@@ -229,4 +308,47 @@ export async function updateSession(data: {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+}
+
+// Auth
+export async function register(data: {
+  email: string;
+  password: string;
+  displayName: string;
+}) {
+  return fetchApi<{ id: string; email: string; displayName: string }>(
+    '/auth/register',
+    { method: 'POST', body: JSON.stringify(data) }
+  );
+}
+
+export async function login(data: { email: string; password: string }) {
+  return fetchApi<{ id: string; email: string; displayName: string }>(
+    '/auth/login',
+    { method: 'POST', body: JSON.stringify(data) }
+  );
+}
+
+export async function getProfile() {
+  return fetchApi<{
+    sessionId: string;
+    displayName: string;
+    avatarSeed: string;
+    isRegistered: boolean;
+    user: {
+      id: string;
+      email: string | null;
+      displayName: string;
+      avatarUrl: string | null;
+      googleId: string | null;
+      role: string;
+      rating: number;
+      reviewCount: number;
+      createdAt: string;
+    } | null;
+  }>('/auth/profile');
+}
+
+export async function logout() {
+  return fetchApi<void>('/auth/logout', { method: 'POST' });
 }

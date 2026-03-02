@@ -103,3 +103,18 @@ export type CreateReviewInput = z.infer<typeof createReviewSchema>;
 export type CreateDisputeInput = z.infer<typeof createDisputeSchema>;
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type CreateChatRoomInput = z.infer<typeof createChatRoomSchema>;
+
+export const createPostSchema = z.object({
+  type: z.enum(["RUBHEW", "HAKHONG"]),
+  content: z.string().min(1).max(5000),
+  imageUrls: z.array(z.string().url()).max(10).default([]),
+  country: z.string().max(100).optional(),
+  city: z.string().max(100).optional(),
+  travelDate: z.string().datetime().optional(),
+  budget: z.number().positive().optional(),
+});
+
+export const updatePostSchema = createPostSchema.partial().omit({ type: true });
+
+export type CreatePostInput = z.infer<typeof createPostSchema>;
+export type UpdatePostInput = z.infer<typeof updatePostSchema>;

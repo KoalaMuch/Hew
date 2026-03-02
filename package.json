@@ -1,5 +1,5 @@
 {
-  "name": "hew",
+  "name": "rubhew",
   "private": true,
   "scripts": {
     "dev": "turbo dev",

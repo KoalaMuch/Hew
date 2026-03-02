@@ -1,4 +1,4 @@
-# Hew (หิ้ว)
+# รับหิ้ว (Rubhew)
 
 A peer-to-peer shopping platform connecting travelers with buyers. Travelers can offer to bring back items from their trips; buyers can request items from specific destinations.
 
@@ -52,7 +52,7 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-Creates admin user `admin@hew.th` / `admin123`, sample trips (Japan, Korea, Indonesia), and item requests.
+Creates admin user `admin@rubhew.com` / `admin123`, sample trips (Japan, Korea, Indonesia), and item requests.
 
 ### 6. Start development
 

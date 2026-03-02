@@ -50,13 +50,13 @@ jobs:
         include:
           - target: runtime-api
             tag: hew-api
-            smoke: "node -e \"require('fs').accessSync('apps/api/dist/main.js'); console.log('API entry OK')\""
+            entry: apps/api/dist/main.js
           - target: runtime-web
             tag: hew-web
-            smoke: "node -e \"require('fs').accessSync('apps/web/server.js'); console.log('Web entry OK')\""
+            entry: apps/web/server.js
           - target: runtime-worker
             tag: hew-worker
-            smoke: "node -e \"require('fs').accessSync('apps/worker/dist/main.js'); console.log('Worker entry OK')\""
+            entry: apps/worker/dist/main.js
     steps:
       - uses: actions/checkout@v4
 
@@ -76,4 +76,4 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.target }}
 
       - name: Smoke test ${{ matrix.tag }}
-        run: docker run --rm ${{ matrix.tag }}:latest sh -c '${{ matrix.smoke }}'
+        run: docker run --rm --entrypoint node ${{ matrix.tag }}:latest -e "require('fs').accessSync('${{ matrix.entry }}'); console.log('OK')"
