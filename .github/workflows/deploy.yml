@@ -31,6 +31,7 @@ jobs:
   deploy:
     needs: check-ci
     runs-on: ubuntu-latest
+    environment: VPS
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
