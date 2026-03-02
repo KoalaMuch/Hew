@@ -1,18 +1,18 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(NotificationService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   notifyInApp(sessionId: string, message: string, data?: Record<string, unknown>) {
-    // Placeholder: log for now. WebSocket delivery when connected will be added later.
-    console.log("[Notification] In-app:", { sessionId, message, data });
+    this.logger.log({ msg: "In-app notification", sessionId, message, data });
   }
 
   notifyEmail(email: string, subject: string, body: string) {
-    // Placeholder: log for now. Real email service will be added later.
-    console.log("[Notification] Email:", { email, subject, body });
+    this.logger.log({ msg: "Email notification", email, subject, bodyLength: body.length });
   }
 
   async notifyOrderUpdate(orderId: string, event: string) {

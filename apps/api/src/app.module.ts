@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
 import { SessionModule } from "./modules/session/session.module";
 import { TripModule } from "./modules/trip/trip.module";
 import { ItemRequestModule } from "./modules/item-request/item-request.module";
@@ -21,6 +23,10 @@ import { HealthController } from "./common/health.controller";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      { name: "short", ttl: 1000, limit: 10 },
+      { name: "long", ttl: 60000, limit: 100 },
+    ]),
     PrismaModule,
     SessionModule,
     TripModule,
@@ -39,5 +45,8 @@ import { HealthController } from "./common/health.controller";
     AuthModule,
   ],
   controllers: [HealthController],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

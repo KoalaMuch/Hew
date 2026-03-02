@@ -38,8 +38,16 @@ export class PaymentController {
 
   @Post("webhook/omise")
   async omiseWebhook(@Body() payload: unknown) {
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      !("key" in payload) ||
+      !("id" in payload)
+    ) {
+      throw new BadRequestException("Invalid webhook payload");
+    }
     return this.paymentService.handleWebhook(
-      (payload as { id?: string; [key: string]: unknown }) ?? {},
+      payload as { id: string; key: string; [key: string]: unknown },
     );
   }
 
