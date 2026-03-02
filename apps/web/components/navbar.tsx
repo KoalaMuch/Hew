@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import {
@@ -49,9 +50,10 @@ export function Navbar() {
           <div className="flex h-14 items-center justify-between">
             <Link
               href="/"
-              className="text-xl font-bold tracking-tight text-primary-600 hover:text-primary-700"
+              className="flex items-center gap-2 text-xl font-bold tracking-tight text-primary-600 hover:text-primary-700"
             >
-              รับหิ้ว
+              <Image src="/logo.png" alt="รับหิ้ว" width={32} height={32} className="rounded-lg" priority />
+              <span className="hidden sm:inline">รับหิ้ว</span>
             </Link>
 
             {/* Desktop links */}

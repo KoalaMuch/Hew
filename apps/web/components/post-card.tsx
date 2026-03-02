@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Calendar, Eye } from 'lucide-react';
@@ -50,7 +51,7 @@ function renderContent(content: string) {
   );
 }
 
-export function PostCard({
+export const PostCard = memo(function PostCard({
   id,
   type,
   content,
@@ -155,4 +156,4 @@ export function PostCard({
       </div>
     </article>
   );
-}
+});

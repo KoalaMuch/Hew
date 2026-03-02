@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import Link from 'next/link';
 
 interface TripCardProps {
@@ -10,7 +11,7 @@ interface TripCardProps {
   status?: string;
 }
 
-export function TripCard({
+export const TripCard = memo(function TripCard({
   id,
   country,
   city,
@@ -62,4 +63,4 @@ export function TripCard({
       </div>
     </Link>
   );
-}
+});

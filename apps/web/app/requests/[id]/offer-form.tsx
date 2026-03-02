@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createOffer } from '@/lib/api';
+import { getErrorMessage } from '@hew/shared';
 
 interface OfferFormProps {
   itemRequestId: string;
@@ -31,7 +32,7 @@ export function OfferForm({ itemRequestId }: OfferFormProps) {
       router.refresh();
       form.reset();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

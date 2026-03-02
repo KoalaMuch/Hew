@@ -14,12 +14,22 @@ export const metadata: Metadata = {
   description:
     'รับหิ้ว (Rubhew) - แพลตฟอร์มรับหิ้วของจากต่างประเทศ เชื่อมโยงนักเดินทางกับผู้ซื้อ | Marketplace connecting travelers and buyers in Thailand.',
   keywords: ['รับหิ้ว', 'rubhew', 'หิ้ว', 'marketplace', 'thailand', 'travel', 'shopping'],
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+  },
   openGraph: {
     title: 'รับหิ้ว | Rubhew - รับหิ้วของจากต่างประเทศ ง่ายนิดเดียว',
     description:
       'แพลตฟอร์มรับหิ้วของจากต่างประเทศ เชื่อมโยงนักเดินทางกับผู้ซื้อ | Marketplace connecting travelers and buyers.',
     locale: 'th_TH',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'รับหิ้ว | Rubhew - รับหิ้วของจากต่างประเทศ ง่ายนิดเดียว',
+    description:
+      'แพลตฟอร์มรับหิ้วของจากต่างประเทศ เชื่อมโยงนักเดินทางกับผู้ซื้อ',
   },
 };
 

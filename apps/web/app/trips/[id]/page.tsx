@@ -1,24 +1,47 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTripById, getOffers } from '@/lib/api';
 import { ChatButton } from './chat-button';
+import type { TripDto, OfferDto } from '@hew/shared';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const trip = await getTripById(id);
+    if (!trip) return {};
+    const location = [trip.city, trip.country].filter(Boolean).join(', ');
+    const title = `ทริป ${location} | Rubhew`;
+    const description = trip.description
+      ? trip.description.slice(0, 160)
+      : `ทริปไป ${location}`;
+    return {
+      title,
+      description,
+      openGraph: { title, description, locale: 'th_TH', type: 'article' },
+      twitter: { card: 'summary', title, description },
+    };
+  } catch {
+    return {};
+  }
+}
+
 export default async function TripDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  let trip: Record<string, unknown> | null = null;
-  let offers: unknown[] = [];
+  let trip: TripDto | null = null;
+  let offers: OfferDto[] = [];
 
   try {
     const [tripData, offersData] = await Promise.all([
       getTripById(id),
-      getOffers({ tripId: id }).catch(() => []),
+      getOffers({ tripId: id }).catch(() => [] as OfferDto[]),
     ]);
-    trip = tripData as Record<string, unknown> | null;
+    trip = tripData;
     offers = Array.isArray(offersData) ? offersData : [];
   } catch {
     notFound();
@@ -28,15 +51,13 @@ export default async function TripDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const pendingOffers = Array.isArray(offers)
-    ? (offers as Record<string, unknown>[]).filter((o) => o.status === 'PENDING')
-    : [];
+  const pendingOffers = offers.filter((o) => o.status === 'PENDING');
 
   const dateRange =
     trip.departureDate && trip.returnDate
-      ? `${new Date(String(trip.departureDate)).toLocaleDateString('th-TH')} - ${new Date(String(trip.returnDate)).toLocaleDateString('th-TH')}`
+      ? `${new Date(trip.departureDate).toLocaleDateString('th-TH')} - ${new Date(trip.returnDate).toLocaleDateString('th-TH')}`
       : trip.departureDate
-        ? `ออกเดินทาง ${new Date(String(trip.departureDate)).toLocaleDateString('th-TH')}`
+        ? `ออกเดินทาง ${new Date(trip.departureDate).toLocaleDateString('th-TH')}`
         : null;
 
   return (
@@ -52,13 +73,13 @@ export default async function TripDetailPage({ params }: PageProps) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {String(trip.country)}
-              {typeof trip.city === 'string' && trip.city !== '' ? ` · ${trip.city}` : null}
+              {trip.country}
+              {trip.city ? ` · ${trip.city}` : null}
             </h1>
             {dateRange && (
               <p className="mt-2 text-gray-600">{dateRange}</p>
             )}
-            {typeof trip.status === 'string' && (
+            {trip.status && (
               <span
                 className={`mt-2 inline-block rounded-full px-3 py-1 text-sm font-medium ${
                   trip.status === 'ACTIVE'
@@ -74,7 +95,7 @@ export default async function TripDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {typeof trip.description === 'string' && (
+        {trip.description && (
           <div className="mt-6 border-t border-gray-100 pt-6">
             <h2 className="font-semibold text-gray-900">รายละเอียด</h2>
             <p className="mt-2 whitespace-pre-wrap text-gray-600">
@@ -94,16 +115,15 @@ export default async function TripDetailPage({ params }: PageProps) {
             ข้อเสนอ ({pendingOffers.length})
           </h2>
           <div className="space-y-4">
-            {(pendingOffers as Record<string, unknown>[]).map((offer) => (
+            {pendingOffers.map((offer) => (
               <div
-                key={String(offer.id)}
+                key={offer.id}
                 className="rounded-xl border border-gray-200 bg-white p-4"
               >
                 <p className="font-medium">
-                  ฿
-                  {(Number(offer.productPrice) + Number(offer.shippingFee)).toLocaleString()}
+                  ฿{(offer.productPrice + offer.shippingFee).toLocaleString()}
                 </p>
-                {typeof offer.notes === 'string' && offer.notes !== '' ? (
+                {offer.notes ? (
                   <p className="mt-1 text-sm text-gray-600">{offer.notes}</p>
                 ) : null}
               </div>

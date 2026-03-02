@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -5,6 +6,32 @@ import { getPostById } from '@/lib/api';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const post = (await getPostById(id)) as PostData | null;
+    if (!post) return {};
+    const title = post.type === 'RUBHEW'
+      ? `รับหิ้ว ${post.country || ''} | Rubhew`.trim()
+      : `หาของ ${post.country || ''} | Rubhew`.trim();
+    const description = post.content.slice(0, 160);
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: post.imageUrls[0] ? [{ url: post.imageUrls[0] }] : [],
+        locale: 'th_TH',
+        type: 'article',
+      },
+      twitter: { card: 'summary_large_image', title, description },
+    };
+  } catch {
+    return {};
+  }
 }
 
 interface PostData {
@@ -53,8 +80,21 @@ export default async function PostDetailPage({ params }: PageProps) {
   const isRubhew = post.type === 'RUBHEW';
   const location = [post.city, post.country].filter(Boolean).join(', ');
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Offer',
+    name: isRubhew ? `รับหิ้ว ${post.country || ''}` : `หาของ ${post.country || ''}`,
+    description: post.content.slice(0, 300),
+    ...(post.budget ? { price: post.budget, priceCurrency: 'THB' } : {}),
+    ...(post.imageUrls[0] ? { image: post.imageUrls[0] } : {}),
+  };
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-6 md:pb-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link
         href="/"
         className="mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-700"

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plane, ShoppingBag, MapPin, Calendar, Send } from 'lucide-react';
+import { getErrorMessage } from '@hew/shared';
 import { createPost } from '@/lib/api';
 
 type PostType = 'RUBHEW' | 'HAKHONG';
@@ -37,7 +38,7 @@ export function CreatePostForm() {
       router.push('/');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด');
+      setError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

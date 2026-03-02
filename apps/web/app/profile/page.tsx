@@ -4,7 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { User, Mail, Shield, LogOut, LogIn, Star } from 'lucide-react';
 import { getProfile, updateSession, logout as apiLogout } from '@/lib/api';
 import { useSession } from '@/lib/session-context';
-import { AuthModal } from '@/components/auth-modal';
+import dynamic from 'next/dynamic';
+
+const AuthModal = dynamic(() => import('@/components/auth-modal').then(m => ({ default: m.AuthModal })), {
+  ssr: false,
+});
 
 interface ProfileData {
   sessionId: string;

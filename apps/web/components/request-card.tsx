@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -11,7 +12,7 @@ interface RequestCardProps {
   status?: string;
 }
 
-export function RequestCard({
+export const RequestCard = memo(function RequestCard({
   id,
   title,
   description,
@@ -72,4 +73,4 @@ export function RequestCard({
       </div>
     </Link>
   );
-}
+});

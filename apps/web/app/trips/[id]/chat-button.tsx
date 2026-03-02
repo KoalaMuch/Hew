@@ -13,8 +13,7 @@ export function ChatButton({ tripId }: ChatButtonProps) {
 
   const handleChat = () => {
     if (!sessionId) return;
-    // TODO: Navigate to chat or open chat modal
-    router.push(`/orders?trip=${tripId}`);
+    router.push(`/chat?trip=${tripId}`);
   };
 
   if (isLoading) {

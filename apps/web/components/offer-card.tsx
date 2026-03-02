@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 interface OfferCardProps {
   id: string;
   productPrice: number;
@@ -9,7 +11,7 @@ interface OfferCardProps {
   showActions?: boolean;
 }
 
-export function OfferCard({
+export const OfferCard = memo(function OfferCard({
   id,
   productPrice,
   shippingFee,
@@ -73,4 +75,4 @@ export function OfferCard({
       )}
     </div>
   );
-}
+});

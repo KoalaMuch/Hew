@@ -1,26 +1,55 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getItemRequestById, getOffers } from '@/lib/api';
 import { OfferCard } from '@/components/offer-card';
 import { OfferForm } from './offer-form';
+import type { ItemRequestDto, OfferDto } from '@hew/shared';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const request = await getItemRequestById(id);
+    if (!request) return {};
+    const title = `${request.title} | Rubhew`;
+    const description = request.description
+      ? request.description.slice(0, 160)
+      : `ขอของจาก ${(request.countries || []).join(', ')}`;
+    const images = request.imageUrls || [];
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: images[0] ? [{ url: images[0] }] : [],
+        locale: 'th_TH',
+        type: 'article',
+      },
+      twitter: { card: 'summary_large_image', title, description },
+    };
+  } catch {
+    return {};
+  }
+}
+
 export default async function RequestDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  let request: Record<string, unknown> | null = null;
-  let offers: unknown[] = [];
+  let request: ItemRequestDto | null = null;
+  let offers: OfferDto[] = [];
 
   try {
     const [reqData, offersData] = await Promise.all([
       getItemRequestById(id),
-      getOffers({ itemRequestId: id }).catch(() => []),
+      getOffers({ itemRequestId: id }).catch(() => [] as OfferDto[]),
     ]);
-    request = reqData as Record<string, unknown> | null;
+    request = reqData;
     offers = Array.isArray(offersData) ? offersData : [];
   } catch {
     notFound();
@@ -30,9 +59,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const offerList = (Array.isArray(offers) ? offers : []) as Record<string, unknown>[];
-  const imageUrls = (request.imageUrls as string[]) || [];
-  const imageUrl = imageUrls[0];
+  const imageUrl = request.imageUrls?.[0];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
@@ -48,9 +75,10 @@ export default async function RequestDetailPage({ params }: PageProps) {
           <div className="relative aspect-video w-full bg-gray-100">
             <Image
               src={imageUrl}
-              alt={String(request.title)}
+              alt={request.title}
               fill
               className="object-cover"
+              priority
             />
           </div>
         ) : (
@@ -61,17 +89,17 @@ export default async function RequestDetailPage({ params }: PageProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {String(request.title)}
+                {request.title}
               </h1>
               <p className="mt-2 text-gray-600">
-                ต้องการจาก: {(request.countries as string[] | undefined)?.join(', ') ?? ''}
+                ต้องการจาก: {request.countries.join(', ')}
               </p>
               {request.maxBudget != null && (
                 <p className="mt-1 font-medium text-primary-600">
                   งบประมาณสูงสุด ฿{Number(request.maxBudget).toLocaleString()}
                 </p>
               )}
-              {typeof request.status === 'string' && request.status !== '' && (
+              {request.status && (
                 <span
                   className={`mt-2 inline-block rounded-full px-3 py-1 text-sm font-medium ${
                     request.status === 'OPEN'
@@ -81,34 +109,34 @@ export default async function RequestDetailPage({ params }: PageProps) {
                         : 'bg-gray-100 text-gray-700'
                   }`}
                 >
-                  {String(request.status)}
+                  {request.status}
                 </span>
               )}
             </div>
           </div>
 
-          {request.description != null && request.description !== '' && (
+          {request.description && (
             <div className="mt-6 border-t border-gray-100 pt-6">
               <h2 className="font-semibold text-gray-900">รายละเอียด</h2>
               <p className="mt-2 whitespace-pre-wrap text-gray-600">
-                {String(request.description)}
+                {request.description}
               </p>
             </div>
           )}
 
           <div className="mt-8">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">
-              ข้อเสนอ ({offerList.length})
+              ข้อเสนอ ({offers.length})
             </h2>
             <div className="space-y-4">
-              {(offerList as Record<string, unknown>[]).map((offer) => (
+              {offers.map((offer) => (
                 <OfferCard
-                  key={String(offer.id)}
-                  id={String(offer.id)}
-                  productPrice={Number(offer.productPrice)}
-                  shippingFee={Number(offer.shippingFee)}
-                  notes={offer.notes as string | undefined}
-                  status={offer.status as string | undefined}
+                  key={offer.id}
+                  id={offer.id}
+                  productPrice={offer.productPrice}
+                  shippingFee={offer.shippingFee}
+                  notes={offer.notes ?? undefined}
+                  status={offer.status}
                 />
               ))}
             </div>
