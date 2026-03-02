@@ -52,8 +52,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=build-web /app/apps/web/.next/standalone ./
 COPY --from=build-web /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build-web /app/apps/web/public ./apps/web/public
-EXPOSE 3001
+ENV HOSTNAME=0.0.0.0
 ENV PORT=3001
+EXPOSE 3001
 CMD ["node", "apps/web/server.js"]
 
 # ─── runtime: worker ────────────────────────────────────
