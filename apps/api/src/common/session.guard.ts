@@ -4,6 +4,11 @@ import {
   Injectable,
 } from "@nestjs/common";
 import { Request, Response } from "express";
+
+// Extend Express Request to include sessionId
+interface RequestWithSession extends Request {
+  [SESSION_ID_KEY]?: string;
+}
 import { PrismaService } from "./prisma.service";
 import { SESSION_COOKIE_NAME, SESSION_TOKEN_HEADER } from "@hew/shared";
 import { SESSION_ID_KEY } from "./session.decorator";
@@ -15,7 +20,7 @@ export class SessionGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<RequestWithSession>();
     const response = context.switchToHttp().getResponse<Response>();
 
     const token =
@@ -42,7 +47,7 @@ export class SessionGuard implements CanActivate {
       sessionId = await this.createSession(response);
     }
 
-    (request as any)[SESSION_ID_KEY] = sessionId;
+    request[SESSION_ID_KEY] = sessionId;
     return true;
   }
 

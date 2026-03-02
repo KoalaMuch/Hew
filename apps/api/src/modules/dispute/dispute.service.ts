@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { DisputeStatus, OrderStatus } from "@hew/db";
+import { OrderStatus } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import type { CreateDisputeInput } from "@hew/shared";
 
