@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getItemRequestById, getOffers } from '@/lib/api';
@@ -44,11 +45,12 @@ export default async function RequestDetailPage({ params }: PageProps) {
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {imageUrl ? (
-          <div className="aspect-video w-full bg-gray-100">
-            <img
+          <div className="relative aspect-video w-full bg-gray-100">
+            <Image
               src={imageUrl}
               alt={String(request.title)}
-              className="h-full w-full object-cover"
+              fill
+              className="object-cover"
             />
           </div>
         ) : (

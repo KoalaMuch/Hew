@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface RequestCardProps {
@@ -27,11 +28,12 @@ export function RequestCard({
       className="block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-primary-200 hover:shadow-md"
     >
       {imageUrl ? (
-        <div className="aspect-video w-full bg-gray-100">
-          <img
+        <div className="relative aspect-video w-full bg-gray-100">
+          <Image
             src={imageUrl}
             alt={title}
-            className="h-full w-full object-cover"
+            fill
+            className="object-cover"
           />
         </div>
       ) : (
