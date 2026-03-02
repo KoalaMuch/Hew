@@ -3,8 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { EscrowStatus, OrderStatus, PayoutStatus } from "@hew/db";
+import { PrismaClient } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
+
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 @Injectable()
 export class PayoutService {
@@ -31,14 +36,14 @@ export class PayoutService {
       throw new BadRequestException("Payout already exists for this order");
     }
 
-    const payout = await this.prisma.$transaction(async (tx) => {
+    const payout = await this.prisma.$transaction(async (tx: TransactionClient) => {
       const created = await tx.payout.create({
         data: {
           orderId,
           travelerSessionId: order.travelerSessionId,
           amount: order.payoutAmount,
           bankAccount: bankAccount as object,
-          status: PayoutStatus.COMPLETED,
+          status: "COMPLETED",
           processedAt: new Date(),
         },
       });
@@ -47,7 +52,7 @@ export class PayoutService {
         await tx.escrowPayment.update({
           where: { orderId },
           data: {
-            status: EscrowStatus.RELEASED,
+            status: "RELEASED",
             releasedAt: new Date(),
           },
         });
@@ -55,7 +60,7 @@ export class PayoutService {
 
       await tx.order.update({
         where: { id: orderId },
-        data: { status: OrderStatus.COMPLETED },
+        data: { status: "COMPLETED" },
       });
 
       return created;
@@ -74,15 +79,15 @@ export class PayoutService {
       throw new NotFoundException("Payout not found");
     }
 
-    if (payout.status === PayoutStatus.COMPLETED) {
+    if (payout.status === "COMPLETED") {
       return payout;
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: TransactionClient) => {
       await tx.payout.update({
         where: { id },
         data: {
-          status: PayoutStatus.COMPLETED,
+          status: "COMPLETED",
           processedAt: new Date(),
         },
       });
@@ -91,7 +96,7 @@ export class PayoutService {
         await tx.escrowPayment.update({
           where: { orderId: payout.orderId },
           data: {
-            status: EscrowStatus.RELEASED,
+            status: "RELEASED",
             releasedAt: new Date(),
           },
         });
@@ -99,7 +104,7 @@ export class PayoutService {
 
       await tx.order.update({
         where: { id: payout.orderId },
-        data: { status: OrderStatus.COMPLETED },
+        data: { status: "COMPLETED" },
       });
     });
 

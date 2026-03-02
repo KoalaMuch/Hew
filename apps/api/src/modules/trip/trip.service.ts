@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { TripStatus } from "@hew/db";
+import type { TripStatus } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import type { CreateTripInput } from "@hew/shared";
 
@@ -96,7 +96,7 @@ export class TripService {
 
     return this.prisma.trip.update({
       where: { id },
-      data: { status: TripStatus.CANCELLED },
+      data: { status: "CANCELLED" },
     });
   }
 }

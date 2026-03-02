@@ -3,11 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OrderStatus } from "@hew/db";
+import type { OrderStatus } from "@hew/db";
 import { PrismaClient } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import { generateIdempotencyKey } from "@hew/shared";
-import { Prisma } from "@hew/db";
+
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 @Injectable()
 export class OrderService {
@@ -18,15 +22,12 @@ export class OrderService {
       id: string;
       buyerSessionId: string;
       travelerSessionId: string;
-      totalPrice: Prisma.Decimal;
-      commissionFee: Prisma.Decimal;
-      productPrice: Prisma.Decimal;
-      shippingFee: Prisma.Decimal;
+      totalPrice: { toString(): string };
+      commissionFee: { toString(): string };
+      productPrice: { toString(): string };
+      shippingFee: { toString(): string };
     },
-    tx?: Omit<
-      PrismaClient,
-      "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
-    >,
+    tx?: TransactionClient,
   ) {
     const client = tx ?? this.prisma;
     const idempotencyKey = generateIdempotencyKey();
@@ -38,10 +39,10 @@ export class OrderService {
         offerId: offer.id,
         buyerSessionId: offer.buyerSessionId,
         travelerSessionId: offer.travelerSessionId,
-        totalAmount: offer.totalPrice,
-        commissionAmount: offer.commissionFee,
-        payoutAmount: new Prisma.Decimal(payoutAmount),
-        status: OrderStatus.ESCROW_PENDING,
+        totalAmount: Number(offer.totalPrice),
+        commissionAmount: Number(offer.commissionFee),
+        payoutAmount,
+        status: "ESCROW_PENDING",
         idempotencyKey,
       },
     });
@@ -100,17 +101,14 @@ export class OrderService {
       throw new ForbiddenException("Only the buyer can confirm delivery");
     }
 
-    return this.updateStatus(id, OrderStatus.DELIVERED, sessionId);
+    return this.updateStatus(id, "DELIVERED", sessionId);
   }
 
   async updateStatus(
     id: string,
     status: OrderStatus,
     sessionId?: string,
-    tx?: Omit<
-      PrismaClient,
-      "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
-    >,
+    tx?: TransactionClient,
   ) {
     const client = tx ?? this.prisma;
 

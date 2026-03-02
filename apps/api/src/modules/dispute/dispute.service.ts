@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OrderStatus } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import type { CreateDisputeInput } from "@hew/shared";
 
@@ -38,7 +37,7 @@ export class DisputeService {
 
     await this.prisma.order.update({
       where: { id: orderId },
-      data: { status: OrderStatus.DISPUTED },
+      data: { status: "DISPUTED" },
     });
 
     return dispute;
@@ -98,10 +97,7 @@ export class DisputeService {
       throw new NotFoundException("Dispute not found");
     }
 
-    const orderStatus =
-      status === "RESOLVED_BUYER"
-        ? OrderStatus.RESOLVED_BUYER
-        : OrderStatus.RESOLVED_TRAVELER;
+    const orderStatus = status;
 
     await this.prisma.$transaction([
       this.prisma.dispute.update({

@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { MessageType } from "@hew/db";
+import type { MessageType } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import type { CreateChatRoomInput } from "@hew/shared";
 
@@ -107,7 +107,7 @@ export class ChatService {
         senderId,
         content: data.content,
         imageUrl: data.imageUrl,
-        type: data.type ?? MessageType.TEXT,
+        type: data.type ?? "TEXT",
       },
       include: {
         sender: {

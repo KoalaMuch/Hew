@@ -2,7 +2,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { DisputeStatus, OrderStatus } from "@hew/db";
+import type { OrderStatus } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import { DisputeService } from "../dispute/dispute.service";
 
@@ -103,11 +103,7 @@ export class AdminService {
   }
 
   async resolveDispute(id: string, body: ResolveDisputeBody) {
-    const status =
-      body.status === "RESOLVED_BUYER"
-        ? DisputeStatus.RESOLVED_BUYER
-        : DisputeStatus.RESOLVED_TRAVELER;
-    return this.disputeService.resolve(id, body.resolution, status);
+    return this.disputeService.resolve(id, body.resolution, body.status);
   }
 
   async listPayouts() {

@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ZodError } from "zod";
-import { TripStatus } from "@hew/db";
+import type { TripStatus } from "@hew/db";
 import {
   createTripSchema,
   type CreateTripInput,

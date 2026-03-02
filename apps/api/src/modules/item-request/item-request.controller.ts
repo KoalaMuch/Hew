@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ZodError } from "zod";
-import { ItemRequestStatus } from "@hew/db";
+import type { ItemRequestStatus } from "@hew/db";
 import {
   createItemRequestSchema,
   type CreateItemRequestInput,

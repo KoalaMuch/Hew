@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ItemRequestStatus } from "@hew/db";
+import type { ItemRequestStatus } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import type { CreateItemRequestInput } from "@hew/shared";
 

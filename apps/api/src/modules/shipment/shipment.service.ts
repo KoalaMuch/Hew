@@ -4,9 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OrderStatus, ShipmentStatus } from "@hew/db";
+import { PrismaClient } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import type { ShipOrderInput } from "@hew/shared";
+
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 @Injectable()
 export class ShipmentService {
@@ -30,14 +35,14 @@ export class ShipmentService {
       throw new ForbiddenException("Only the traveler can mark the order as shipped");
     }
 
-    const allowedStatuses: OrderStatus[] = [OrderStatus.PAID, OrderStatus.PURCHASING];
-    if (!allowedStatuses.includes(order.status)) {
+    const allowedStatuses = ["PAID", "PURCHASING"] as const;
+    if (!allowedStatuses.includes(order.status as typeof allowedStatuses[number])) {
       throw new BadRequestException(
         "Order must be in PAID or PURCHASING status to ship",
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: TransactionClient) => {
       await tx.shipment.upsert({
         where: { orderId },
         create: {
@@ -45,14 +50,14 @@ export class ShipmentService {
           trackingNumber: data.trackingNumber,
           carrier: data.carrier,
           proofImageUrls: data.proofImageUrls,
-          status: ShipmentStatus.SHIPPED,
+          status: "SHIPPED",
           shippedAt: new Date(),
         },
         update: {
           trackingNumber: data.trackingNumber,
           carrier: data.carrier,
           proofImageUrls: data.proofImageUrls,
-          status: ShipmentStatus.SHIPPED,
+          status: "SHIPPED",
           shippedAt: new Date(),
         },
       });
@@ -61,7 +66,7 @@ export class ShipmentService {
         where: { id: orderId },
         data: {
           travelerBankAccount: data.bankAccount as object,
-          status: OrderStatus.SHIPPED,
+          status: "SHIPPED",
         },
       });
     });

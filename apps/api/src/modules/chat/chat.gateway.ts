@@ -10,7 +10,7 @@ import { Logger } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma.service";
 import { ChatService } from "./chat.service";
 import { SESSION_TOKEN_HEADER } from "@hew/shared";
-import { MessageType } from "@hew/db";
+import type { MessageType } from "@hew/db";
 
 interface AuthenticatedSocket {
   id: string;

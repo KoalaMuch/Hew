@@ -4,10 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { EscrowStatus, OrderStatus } from "@hew/db";
+import { PrismaClient } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import { generateIdempotencyKey } from "@hew/shared";
 import type { GuestCheckoutInput } from "@hew/shared";
+
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 @Injectable()
 export class PaymentService {
@@ -31,7 +36,7 @@ export class PaymentService {
       throw new ForbiddenException("Only the buyer can initiate payment");
     }
 
-    if (order.status !== OrderStatus.ESCROW_PENDING) {
+    if (order.status !== "ESCROW_PENDING") {
       throw new BadRequestException(
         "Order must be in ESCROW_PENDING status to initiate payment",
       );
@@ -39,7 +44,7 @@ export class PaymentService {
 
     const idempotencyKey = generateIdempotencyKey();
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: TransactionClient) => {
       await tx.order.update({
         where: { id: orderId },
         data: {
@@ -53,13 +58,13 @@ export class PaymentService {
       });
 
       if (existing) {
-        if (existing.status === EscrowStatus.FUNDED) {
+        if (existing.status === "FUNDED") {
           return;
         }
         await tx.escrowPayment.update({
           where: { orderId },
           data: {
-            status: EscrowStatus.FUNDED,
+            status: "FUNDED",
             fundedAt: new Date(),
           },
         });
@@ -69,7 +74,7 @@ export class PaymentService {
             orderId,
             amount: order.totalAmount,
             idempotencyKey,
-            status: EscrowStatus.FUNDED,
+            status: "FUNDED",
             fundedAt: new Date(),
           },
         });
@@ -77,7 +82,7 @@ export class PaymentService {
 
       await tx.order.update({
         where: { id: orderId },
-        data: { status: OrderStatus.PAID },
+        data: { status: "PAID" },
       });
     });
 
@@ -103,22 +108,22 @@ export class PaymentService {
       return { processed: false, reason: "Escrow payment not found" };
     }
 
-    if (escrowPayment.status === EscrowStatus.FUNDED) {
+    if (escrowPayment.status === "FUNDED") {
       return { processed: true, reason: "Already funded (idempotent)" };
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: TransactionClient) => {
       await tx.escrowPayment.update({
         where: { id: escrowPayment.id },
         data: {
-          status: EscrowStatus.FUNDED,
+          status: "FUNDED",
           fundedAt: new Date(),
         },
       });
 
       await tx.order.update({
         where: { id: escrowPayment.orderId },
-        data: { status: OrderStatus.PAID },
+        data: { status: "PAID" },
       });
     });
 

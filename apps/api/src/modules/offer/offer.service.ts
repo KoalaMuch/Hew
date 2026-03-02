@@ -4,12 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OfferStatus } from "@hew/db";
+import { PrismaClient } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import { calculateCommission } from "@hew/shared";
 import type { CreateOfferInput } from "@hew/shared";
-import { Prisma } from "@hew/db";
 import { OrderService } from "../order/order.service";
+
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 @Injectable()
 export class OfferService {
@@ -54,10 +58,10 @@ export class OfferService {
         itemRequestId: data.itemRequestId,
         travelerSessionId,
         buyerSessionId,
-        productPrice: new Prisma.Decimal(data.productPrice),
-        shippingFee: new Prisma.Decimal(data.shippingFee),
-        commissionFee: new Prisma.Decimal(commissionFee),
-        totalPrice: new Prisma.Decimal(totalPrice),
+        productPrice: data.productPrice,
+        shippingFee: data.shippingFee,
+        commissionFee,
+        totalPrice,
         notes: data.notes,
       },
     });
@@ -93,7 +97,7 @@ export class OfferService {
       throw new NotFoundException("Offer not found");
     }
 
-    if (offer.status !== OfferStatus.PENDING) {
+    if (offer.status !== "PENDING") {
       throw new BadRequestException("Offer is not pending");
     }
 
@@ -102,10 +106,10 @@ export class OfferService {
     }
 
     let createdOrderId = "";
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: TransactionClient) => {
       await tx.offer.update({
         where: { id },
-        data: { status: OfferStatus.ACCEPTED },
+        data: { status: "ACCEPTED" },
       });
 
       if (offer.itemRequestId) {
@@ -113,9 +117,9 @@ export class OfferService {
           where: {
             itemRequestId: offer.itemRequestId,
             id: { not: id },
-            status: OfferStatus.PENDING,
+            status: "PENDING",
           },
-          data: { status: OfferStatus.REJECTED },
+          data: { status: "REJECTED" },
         });
       }
 
@@ -141,7 +145,7 @@ export class OfferService {
 
     return this.prisma.offer.update({
       where: { id },
-      data: { status: OfferStatus.REJECTED },
+      data: { status: "REJECTED" },
     });
   }
 }

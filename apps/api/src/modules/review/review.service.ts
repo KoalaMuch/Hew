@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { OrderStatus } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
 import type { CreateReviewInput } from "@hew/shared";
 
@@ -21,7 +20,7 @@ export class ReviewService {
       throw new NotFoundException("Order not found");
     }
 
-    if (order.status !== OrderStatus.COMPLETED) {
+    if (order.status !== "COMPLETED") {
       throw new BadRequestException("Can only review completed orders");
     }
 
