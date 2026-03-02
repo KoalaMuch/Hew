@@ -13,6 +13,19 @@ export {
 } from "./types/index";
 export type { BankAccount } from "./types/index";
 
+export type {
+  SessionInfo,
+  TripDto,
+  ItemRequestDto,
+  OfferDto,
+  OrderDto,
+  PostDto,
+  ChatRoomDto,
+  ChatMessageDto,
+  PaginatedResponse,
+  ProfileDto,
+} from "./types/dto";
+
 export {
   PLATFORM_COMMISSION_RATE,
   CURRENCY,
@@ -64,4 +77,5 @@ export type {
 export {
   calculateCommission,
   generateIdempotencyKey,
+  getErrorMessage,
 } from "./utils/index";

@@ -13,3 +13,9 @@ export function calculateCommission(productPrice: number, shippingFee: number) {
 export function generateIdempotencyKey(): string {
   return crypto.randomUUID();
 }
+
+export function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "เกิดข้อผิดพลาด";
+}
