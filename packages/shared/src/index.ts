@@ -41,6 +41,8 @@ export {
   createDisputeSchema,
   sendMessageSchema,
   createChatRoomSchema,
+  createPostSchema,
+  updatePostSchema,
 } from "./validators/index";
 export type {
   CreateTripInput,
@@ -55,6 +57,8 @@ export type {
   CreateDisputeInput,
   SendMessageInput,
   CreateChatRoomInput,
+  CreatePostInput,
+  UpdatePostInput,
 } from "./validators/index";
 
 export {
