@@ -28,6 +28,8 @@ if ! docker compose version &> /dev/null; then
     exit 1
 fi
 
+export $(grep -v '^#' .env.production | xargs)
+
 echo -e "${YELLOW}📦 Building Docker images...${NC}"
 docker compose -f docker-compose.prod.yml build
 
