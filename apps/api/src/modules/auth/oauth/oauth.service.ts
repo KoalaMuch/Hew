@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { OAuthProvider, OAuthProfile } from "./oauth.types";
@@ -278,7 +279,6 @@ export class OAuthService {
    * This is a simplified implementation — production should cache the generated token.
    */
   private generateAppleClientSecret(): string {
-    const crypto = require("crypto") as typeof import("crypto");
     const teamId = this.getRequired("APPLE_TEAM_ID");
     const clientId = this.getRequired("APPLE_CLIENT_ID");
     const keyId = this.getRequired("APPLE_KEY_ID");

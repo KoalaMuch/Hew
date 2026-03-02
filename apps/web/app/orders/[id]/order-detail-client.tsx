@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getOrderById } from '@/lib/api';
 import { OrderStatus } from '@/components/order-status';
+import type { OrderDto } from '@hew/shared';
 
 interface OrderDetailClientProps {
   orderId: string;
@@ -11,12 +12,12 @@ interface OrderDetailClientProps {
 
 export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
   const router = useRouter();
-  const [order, setOrder] = useState<Record<string, unknown> | null>(null);
+  const [order, setOrder] = useState<OrderDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getOrderById(orderId)
-      .then((data) => setOrder(data as Record<string, unknown>))
+      .then((data) => setOrder(data))
       .catch(() => router.replace('/orders'))
       .finally(() => setLoading(false));
   }, [orderId, router]);
@@ -35,19 +36,19 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
     return null;
   }
 
-  const status = order.status as string;
+  const status = order.status;
   const totalAmount = order.totalAmount ? Number(order.totalAmount) : 0;
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          คำสั่งซื้อ #{String(order.id).slice(0, 8)}
+          คำสั่งซื้อ #{order.id.slice(0, 8)}
         </h1>
         <p className="mt-2 text-gray-600">
           สร้างเมื่อ{' '}
           {order.createdAt
-            ? new Date(order.createdAt as string).toLocaleDateString('th-TH', {
+            ? new Date(order.createdAt).toLocaleDateString('th-TH', {
                 dateStyle: 'long',
               })
             : '-'}

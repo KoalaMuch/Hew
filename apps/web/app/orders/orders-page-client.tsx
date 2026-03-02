@@ -3,15 +3,16 @@
 import { useEffect, useState } from 'react';
 import { getOrders } from '@/lib/api';
 import { OrdersList } from './orders-list';
+import type { OrderDto } from '@hew/shared';
 
 export function OrdersPageClient() {
-  const [orders, setOrders] = useState<Array<Record<string, unknown>>>([]);
+  const [orders, setOrders] = useState<OrderDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getOrders()
       .then((data) =>
-        setOrders(Array.isArray(data) ? (data as Record<string, unknown>[]) : [])
+        setOrders(Array.isArray(data) ? data : [])
       )
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));

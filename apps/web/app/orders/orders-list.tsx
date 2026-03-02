@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import type { OrderDto } from '@hew/shared';
 
 interface OrdersListProps {
-  orders: Array<Record<string, unknown>>;
+  orders: OrderDto[];
 }
 
 const statusLabels: Record<string, string> = {
@@ -42,26 +43,26 @@ export function OrdersList({ orders }: OrdersListProps) {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-medium text-gray-900">
-                คำสั่งซื้อ #{String(order.id).slice(0, 8)}
+                คำสั่งซื้อ #{order.id.slice(0, 8)}
               </p>
               <p className="mt-1 text-sm text-gray-500">
                 สร้างเมื่อ{' '}
                 {order.createdAt
-                  ? new Date(order.createdAt as string).toLocaleDateString('th-TH')
+                  ? new Date(order.createdAt).toLocaleDateString('th-TH')
                   : '-'}
               </p>
             </div>
             <span
               className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${
-                (order.status as string) === 'COMPLETED'
+                order.status === 'COMPLETED'
                   ? 'bg-green-100 text-green-800'
-                  : (order.status as string) === 'CANCELLED' ||
-                      (order.status as string) === 'REFUNDED'
+                  : order.status === 'CANCELLED' ||
+                      order.status === 'REFUNDED'
                     ? 'bg-red-100 text-red-800'
                     : 'bg-amber-100 text-amber-800'
               }`}
             >
-              {statusLabels[order.status as string] || (order.status as string)}
+              {statusLabels[order.status] || order.status}
             </span>
           </div>
         </Link>
