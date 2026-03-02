@@ -1,9 +1,33 @@
+import type {
+  TripDto,
+  ItemRequestDto,
+  OfferDto,
+  OrderDto,
+  PostDto,
+  ChatRoomDto,
+  ChatMessageDto,
+  PaginatedResponse,
+  ProfileDto,
+} from '@hew/shared';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 let sessionToken: string | null = null;
 
 export function setSessionToken(token: string | null) {
   sessionToken = token;
+}
+
+function buildQueryString(params?: Record<string, string | number | undefined | null>): string {
+  if (!params) return '';
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      search.set(key, String(value));
+    }
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : '';
 }
 
 async function fetchApi<T>(
@@ -41,19 +65,11 @@ export async function getTrips(params?: {
   page?: number;
   limit?: number;
 }) {
-  const search = new URLSearchParams();
-  if (params?.country) search.set('country', params.country);
-  if (params?.status) search.set('status', params.status);
-  if (params?.page !== undefined) search.set('page', String(params.page));
-  if (params?.limit !== undefined) search.set('limit', String(params.limit));
-  const qs = search.toString();
-  return fetchApi<{ data: unknown[]; total: number }>(
-    `/trips${qs ? `?${qs}` : ''}`
-  );
+  return fetchApi<PaginatedResponse<TripDto>>(`/trips${buildQueryString(params)}`);
 }
 
 export async function getTripById(id: string) {
-  return fetchApi<unknown>(`/trips/${id}`);
+  return fetchApi<TripDto>(`/trips/${id}`);
 }
 
 export async function createTrip(data: {
@@ -63,7 +79,7 @@ export async function createTrip(data: {
   returnDate?: string;
   description?: string;
 }) {
-  return fetchApi<unknown>('/trips', {
+  return fetchApi<TripDto>('/trips', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -76,19 +92,11 @@ export async function getItemRequests(params?: {
   page?: number;
   limit?: number;
 }) {
-  const search = new URLSearchParams();
-  if (params?.country) search.set('country', params.country);
-  if (params?.status) search.set('status', params.status);
-  if (params?.page !== undefined) search.set('page', String(params.page));
-  if (params?.limit !== undefined) search.set('limit', String(params.limit));
-  const qs = search.toString();
-  return fetchApi<{ data: unknown[]; total: number }>(
-    `/item-requests${qs ? `?${qs}` : ''}`
-  );
+  return fetchApi<PaginatedResponse<ItemRequestDto>>(`/item-requests${buildQueryString(params)}`);
 }
 
 export async function getItemRequestById(id: string) {
-  return fetchApi<unknown>(`/item-requests/${id}`);
+  return fetchApi<ItemRequestDto>(`/item-requests/${id}`);
 }
 
 export async function createItemRequest(data: {
@@ -98,7 +106,7 @@ export async function createItemRequest(data: {
   countries: string[];
   maxBudget?: number;
 }) {
-  return fetchApi<unknown>('/item-requests', {
+  return fetchApi<ItemRequestDto>('/item-requests', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -109,12 +117,9 @@ export async function getOffers(params: {
   itemRequestId?: string;
   tripId?: string;
 }) {
-  const search = new URLSearchParams();
-  if (params.itemRequestId) search.set('itemRequestId', params.itemRequestId);
-  if (params.tripId) search.set('tripId', params.tripId);
-  const qs = search.toString();
+  const qs = buildQueryString(params);
   if (!qs) throw new Error('Either itemRequestId or tripId is required');
-  return fetchApi<unknown[]>(`/offers?${qs}`);
+  return fetchApi<OfferDto[]>(`/offers${qs}`);
 }
 
 export async function createOffer(data: {
@@ -124,26 +129,25 @@ export async function createOffer(data: {
   shippingFee: number;
   notes?: string;
 }) {
-  return fetchApi<unknown>('/offers', {
+  return fetchApi<OfferDto>('/offers', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
 export async function acceptOffer(id: string) {
-  return fetchApi<unknown>(`/offers/${id}/accept`, {
+  return fetchApi<OfferDto>(`/offers/${id}/accept`, {
     method: 'PATCH',
   });
 }
 
 // Orders
 export async function getOrders(role?: 'buyer' | 'traveler') {
-  const qs = role ? `?role=${role}` : '';
-  return fetchApi<unknown[]>(`/orders${qs}`);
+  return fetchApi<OrderDto[]>(`/orders${buildQueryString({ role })}`);
 }
 
 export async function getOrderById(id: string) {
-  return fetchApi<unknown>(`/orders/${id}`);
+  return fetchApi<OrderDto>(`/orders/${id}`);
 }
 
 export async function chargePayment(data: {
@@ -152,7 +156,7 @@ export async function chargePayment(data: {
   email?: string;
   paymentMethod: 'promptpay' | 'credit_card';
 }) {
-  return fetchApi<unknown>('/payments/charge', {
+  return fetchApi<{ chargeId: string }>('/payments/charge', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -167,33 +171,28 @@ export async function shipOrder(
     bankAccount: { bankName: string; accountNumber: string; accountName: string };
   }
 ) {
-  return fetchApi<unknown>(`/orders/${orderId}/ship`, {
+  return fetchApi<OrderDto>(`/orders/${orderId}/ship`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
 }
 
 export async function confirmDelivery(orderId: string) {
-  return fetchApi<unknown>(`/orders/${orderId}/deliver`, {
+  return fetchApi<OrderDto>(`/orders/${orderId}/deliver`, {
     method: 'PATCH',
   });
 }
 
 // Chat
 export async function getChatRooms() {
-  return fetchApi<unknown[]>('/chat/rooms');
+  return fetchApi<ChatRoomDto[]>('/chat/rooms');
 }
 
 export async function getChatMessages(
   roomId: string,
   params?: { before?: string; page?: number; limit?: number }
 ) {
-  const search = new URLSearchParams();
-  if (params?.before) search.set('before', params.before);
-  if (params?.page !== undefined) search.set('page', String(params.page));
-  if (params?.limit !== undefined) search.set('limit', String(params.limit));
-  const qs = search.toString();
-  return fetchApi<unknown[]>(`/chat/rooms/${roomId}/messages${qs ? `?${qs}` : ''}`);
+  return fetchApi<ChatMessageDto[]>(`/chat/rooms/${roomId}/messages${buildQueryString(params)}`);
 }
 
 export async function createChatRoom(data: {
@@ -201,7 +200,7 @@ export async function createChatRoom(data: {
   itemRequestId?: string;
   participantSessionId: string;
 }) {
-  return fetchApi<unknown>('/chat/rooms', {
+  return fetchApi<ChatRoomDto>('/chat/rooms', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -216,31 +215,15 @@ export async function getPosts(params?: {
   page?: number;
   limit?: number;
 }) {
-  const search = new URLSearchParams();
-  if (params?.type) search.set('type', params.type);
-  if (params?.hashtag) search.set('hashtag', params.hashtag);
-  if (params?.search) search.set('search', params.search);
-  if (params?.country) search.set('country', params.country);
-  if (params?.page !== undefined) search.set('page', String(params.page));
-  if (params?.limit !== undefined) search.set('limit', String(params.limit));
-  const qs = search.toString();
-  return fetchApi<{ data: unknown[]; total: number }>(
-    `/posts${qs ? `?${qs}` : ''}`
-  );
+  return fetchApi<PaginatedResponse<PostDto>>(`/posts${buildQueryString(params)}`);
 }
 
 export async function getPostById(id: string) {
-  return fetchApi<unknown>(`/posts/${id}`);
+  return fetchApi<PostDto>(`/posts/${id}`);
 }
 
 export async function getMyPosts(params?: { page?: number; limit?: number }) {
-  const search = new URLSearchParams();
-  if (params?.page !== undefined) search.set('page', String(params.page));
-  if (params?.limit !== undefined) search.set('limit', String(params.limit));
-  const qs = search.toString();
-  return fetchApi<{ data: unknown[]; total: number }>(
-    `/posts/mine${qs ? `?${qs}` : ''}`
-  );
+  return fetchApi<PaginatedResponse<PostDto>>(`/posts/mine${buildQueryString(params)}`);
 }
 
 export async function createPost(data: {
@@ -252,7 +235,7 @@ export async function createPost(data: {
   travelDate?: string;
   budget?: number;
 }) {
-  return fetchApi<unknown>('/posts', {
+  return fetchApi<PostDto>('/posts', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -269,7 +252,7 @@ export async function updatePost(
     budget?: number;
   }
 ) {
-  return fetchApi<unknown>(`/posts/${id}`, {
+  return fetchApi<PostDto>(`/posts/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -280,9 +263,8 @@ export async function deletePost(id: string) {
 }
 
 export async function getTrendingHashtags(limit?: number) {
-  const qs = limit ? `?limit=${limit}` : '';
   return fetchApi<Array<{ id: string; name: string; count: number }>>(
-    `/posts/hashtags/trending${qs}`
+    `/posts/hashtags/trending${buildQueryString({ limit })}`
   );
 }
 
@@ -304,7 +286,7 @@ export async function updateSession(data: {
   displayName?: string;
   avatarSeed?: string;
 }) {
-  return fetchApi<unknown>('/sessions/me', {
+  return fetchApi<{ id: string }>('/sessions/me', {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -330,25 +312,13 @@ export async function login(data: { email: string; password: string }) {
 }
 
 export async function getProfile() {
-  return fetchApi<{
-    sessionId: string;
-    displayName: string;
-    avatarSeed: string;
-    isRegistered: boolean;
-    user: {
-      id: string;
-      email: string | null;
-      displayName: string;
-      avatarUrl: string | null;
-      googleId: string | null;
-      role: string;
-      rating: number;
-      reviewCount: number;
-      createdAt: string;
-    } | null;
-  }>('/auth/profile');
+  return fetchApi<ProfileDto>('/auth/profile');
 }
 
 export async function logout() {
   return fetchApi<void>('/auth/logout', { method: 'POST' });
+}
+
+export function getOAuthUrl(provider: 'google' | 'line' | 'facebook' | 'apple') {
+  return `${API_BASE}/auth/${provider}?session=${sessionToken || ''}`;
 }

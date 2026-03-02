@@ -6,6 +6,7 @@ import {
 import { PrismaService } from "../../common/prisma.service";
 import * as bcrypt from "bcryptjs";
 import type { RegisterInput, LoginInput } from "@hew/shared";
+import type { OAuthProfile } from "./oauth/oauth.types";
 
 @Injectable()
 export class AuthService {
@@ -115,6 +116,71 @@ export class AuthService {
       isRegistered: !!session.registeredUser,
       user: session.registeredUser,
     };
+  }
+
+  async loginWithOAuth(sessionId: string, profile: OAuthProfile) {
+    const providerIdField = `${profile.provider}Id` as const;
+
+    const existing = await this.prisma.registeredUser.findFirst({
+      where: { [providerIdField]: profile.providerId } as Record<
+        string,
+        string
+      >,
+    });
+
+    let user: { id: string; displayName: string; email: string | null };
+
+    if (existing) {
+      user = existing;
+      if (profile.avatarUrl && !existing.avatarUrl) {
+        await this.prisma.registeredUser.update({
+          where: { id: existing.id },
+          data: { avatarUrl: profile.avatarUrl },
+        });
+      }
+    } else {
+      if (profile.email) {
+        const byEmail = await this.prisma.registeredUser.findUnique({
+          where: { email: profile.email },
+        });
+        if (byEmail) {
+          user = await this.prisma.registeredUser.update({
+            where: { id: byEmail.id },
+            data: {
+              [providerIdField]: profile.providerId,
+              avatarUrl: byEmail.avatarUrl || profile.avatarUrl || null,
+            },
+          });
+        } else {
+          user = await this.prisma.registeredUser.create({
+            data: {
+              [providerIdField]: profile.providerId,
+              email: profile.email,
+              displayName: profile.displayName,
+              avatarUrl: profile.avatarUrl || null,
+            },
+          });
+        }
+      } else {
+        user = await this.prisma.registeredUser.create({
+          data: {
+            [providerIdField]: profile.providerId,
+            displayName: profile.displayName,
+            avatarUrl: profile.avatarUrl || null,
+          },
+        });
+      }
+    }
+
+    await this.prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        registeredUserId: user.id,
+        displayName: user.displayName,
+      },
+    });
+
+    return { id: user.id, displayName: user.displayName };
   }
 
   async logout(sessionId: string) {
