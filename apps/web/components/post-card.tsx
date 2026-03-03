@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Calendar, Eye } from 'lucide-react';
+import { MapPin, Calendar, Eye, Trash2 } from 'lucide-react';
 import { PostTypeBadge } from './post-type-badge';
 import { HashtagChip } from './hashtag-chip';
 
@@ -24,6 +24,7 @@ interface PostCardProps {
     avatarSeed: string;
   };
   onHashtagClick?: (tag: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -65,6 +66,7 @@ export const PostCard = memo(function PostCard({
   createdAt,
   session,
   onHashtagClick,
+  onDelete,
 }: PostCardProps) {
   const location = [city, country].filter(Boolean).join(', ');
 
@@ -82,6 +84,16 @@ export const PostCard = memo(function PostCard({
           <p className="text-xs text-gray-400">{timeAgo(createdAt)}</p>
         </div>
         <PostTypeBadge type={type} />
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete(id)}
+            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            aria-label="ลบโพสต์"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
 
       {/* Content */}

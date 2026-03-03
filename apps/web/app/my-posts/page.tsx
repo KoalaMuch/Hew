@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { getMyPosts } from '@/lib/api';
+import { getMyPosts, deletePost } from '@/lib/api';
 import { PostCard } from '@/components/post-card';
 import { PostCardSkeleton } from '@/components/skeleton';
 
@@ -33,6 +33,16 @@ export default function MyPostsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('คุณต้องการลบโพสต์นี้หรือไม่?')) return;
+    try {
+      await deletePost(id);
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+    } catch {
+      alert('ไม่สามารถลบโพสต์ได้ กรุณาลองใหม่');
+    }
+  };
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-6 md:pb-8">
       <div className="flex items-center justify-between">
@@ -50,7 +60,7 @@ export default function MyPostsPage() {
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => <PostCardSkeleton key={i} />)
         ) : posts.length > 0 ? (
-          posts.map((post) => <PostCard key={post.id} {...post} />)
+          posts.map((post) => <PostCard key={post.id} {...post} onDelete={handleDelete} />)
         ) : (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-center">
             <p className="text-gray-500">คุณยังไม่มีโพสต์</p>
