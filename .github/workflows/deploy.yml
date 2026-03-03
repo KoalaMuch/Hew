@@ -47,6 +47,7 @@ jobs:
   verify:
     needs: deploy
     runs-on: ubuntu-latest
+    environment: VPS
     steps:
       - name: Wait for services to stabilize
         run: sleep 15
