@@ -41,6 +41,7 @@ COPY --from=build-api /app/apps/api/dist ./apps/api/dist
 COPY --from=build-api /app/apps/api/package.json ./apps/api/
 COPY --from=build-api /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build-api /app/packages ./packages
+ENV NODE_PATH=/app/apps/api/node_modules
 ENV NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"
 ENV OTEL_SERVICE_NAME="hew-api"
 ENV OTEL_EXPORTER_OTLP_ENDPOINT="http://alloy:4318"
