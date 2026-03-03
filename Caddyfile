@@ -3,13 +3,30 @@
 # Then restart Caddy: sudo systemctl restart caddy
 
 rubhew.com {
-    reverse_proxy localhost:3001
+	reverse_proxy localhost:3001
 }
 
 www.rubhew.com {
-    redir https://rubhew.com{uri} permanent
+	redir https://rubhew.com{uri} permanent
 }
 
 api.rubhew.com {
-    reverse_proxy localhost:3000
+	reverse_proxy localhost:3000
+}
+
+# ─── Grafana UI (owner-only via Cloudflare Access) ───────
+grafana.rubhew.com {
+	reverse_proxy localhost:3002
+}
+
+# ─── Telemetry ingest (public but restricted) ────────────
+telemetry.rubhew.com {
+	@collect {
+		method POST OPTIONS
+		path /collect*
+	}
+	reverse_proxy @collect localhost:12347
+
+	# Block everything that isn't POST/OPTIONS to /collect
+	respond "Not Found" 404
 }
