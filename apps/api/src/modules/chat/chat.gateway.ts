@@ -120,4 +120,9 @@ export class ChatGateway
       client.to(`room:${payload.roomId}`).emit("typing", { sessionId });
     }
   }
+
+  /** Emit a message to a room (e.g. ORDER_CARD from API). */
+  emitMessageToRoom(roomId: string, message: unknown) {
+    this.server.to(`room:${roomId}`).emit("message", message);
+  }
 }

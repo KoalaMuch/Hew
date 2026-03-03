@@ -171,4 +171,44 @@ describe("Posts Endpoints (e2e)", () => {
         .expect(403);
     });
   });
+
+  describe("GET /api/posts/hashtags/search", () => {
+    it("returns trending hashtags when query is empty", async () => {
+      const app = getApp();
+      const cookie = await createSessionCookie(app);
+
+      await request(app.getHttpServer())
+        .post("/api/posts")
+        .set("Cookie", cookie)
+        .send({ type: "RUBHEW", content: "Going to #japan #tokyo" })
+        .expect(201);
+
+      const res = await request(app.getHttpServer())
+        .get("/api/posts/hashtags/search?q=")
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      const hasJapan = res.body.some((h: { name: string }) => h.name === "#japan");
+      expect(hasJapan).toBe(true);
+    });
+
+    it("returns matching hashtags for query", async () => {
+      const app = getApp();
+      const cookie = await createSessionCookie(app);
+
+      await request(app.getHttpServer())
+        .post("/api/posts")
+        .set("Cookie", cookie)
+        .send({ type: "RUBHEW", content: "Post with #japan and #jelly" })
+        .expect(201);
+
+      const res = await request(app.getHttpServer())
+        .get("/api/posts/hashtags/search?q=jap")
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      const names = res.body.map((h: { name: string }) => h.name);
+      expect(names).toContain("#japan");
+    });
+  });
 });

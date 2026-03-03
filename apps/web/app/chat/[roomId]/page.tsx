@@ -4,10 +4,12 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Package, Send } from 'lucide-react';
 import { getChatMessages } from '@/lib/api';
 import { useSession } from '@/lib/session-context';
-import { getAvatarInitial } from '@/lib/utils';
+import { Avatar } from '@/components/avatar';
+import { OrderCard } from '@/components/order-card';
+import { CreateOrderModal } from '@/components/create-order-modal';
 import { setSessionToken } from '@/lib/api';
 
 function getSocketUrl(): string {
@@ -25,7 +27,7 @@ interface Message {
   imageUrl?: string | null;
   type: string;
   createdAt: string;
-  sender?: { displayName: string; avatarSeed: string };
+  sender?: { displayName: string; avatarSeed: string; avatarUrl?: string | null };
 }
 
 export default function ChatRoomPage() {
@@ -38,8 +40,11 @@ export default function ChatRoomPage() {
   const [sending, setSending] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [showCreateOrder, setShowCreateOrder] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const hasOrderInChat = messages.some((m) => m.type === 'ORDER_CARD');
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -136,17 +141,36 @@ export default function ChatRoomPage() {
 
   return (
     <div className="flex h-[calc(100dvh-8rem)] flex-col px-4 pb-24 pt-6 md:pb-8">
-      <div className="mb-4 flex items-center gap-4">
-        <Link
-          href="/chat"
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-        >
-          <ArrowLeft size={18} />
-          กลับ
-        </Link>
-        <h1 className="text-lg font-semibold text-gray-900">แชท</h1>
-        {!connected && (
-          <span className="text-xs text-amber-600">กำลังเชื่อมต่อ...</span>
+      {showCreateOrder && (
+        <CreateOrderModal
+          roomId={roomId}
+          onClose={() => setShowCreateOrder(false)}
+          onSuccess={() => setShowCreateOrder(false)}
+        />
+      )}
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/chat"
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+          >
+            <ArrowLeft size={18} />
+            กลับ
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-900">แชท</h1>
+          {!connected && (
+            <span className="text-xs text-amber-600">กำลังเชื่อมต่อ...</span>
+          )}
+        </div>
+        {!hasOrderInChat && (
+          <button
+            type="button"
+            onClick={() => setShowCreateOrder(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-100"
+          >
+            <Package size={18} />
+            สร้างออเดอร์
+          </button>
         )}
       </div>
 
@@ -165,23 +189,65 @@ export default function ChatRoomPage() {
               <div className="space-y-4">
                 {messages.map((msg) => {
                   const isOwn = msg.senderId === sessionId;
+                  if (msg.type === 'ORDER_CARD') {
+                    try {
+                      const data = JSON.parse(msg.content) as {
+                        orderId: string;
+                        orderName: string | null;
+                        orderImageUrl: string | null;
+                        totalAmount: number;
+                        status: string;
+                        trackingNumber?: string | null;
+                        carrier?: string | null;
+                      };
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
+                        >
+                          <Avatar
+                            src={msg.sender?.avatarUrl}
+                            displayName={msg.sender?.displayName}
+                            avatarSeed={msg.sender?.avatarSeed}
+                            size="sm"
+                            className={isOwn ? 'bg-primary-600' : ''}
+                          />
+                          <div className="max-w-[85%]">
+                            {!isOwn && (
+                              <p className="mb-1 text-xs font-medium text-gray-500">
+                                {msg.sender?.displayName || 'Anonymous'}
+                              </p>
+                            )}
+                            <OrderCard data={data} isOwn={isOwn} />
+                            <p
+                              className={`mt-1 text-xs ${
+                                isOwn ? 'text-primary-100' : 'text-gray-400'
+                              }`}
+                            >
+                              {new Date(msg.createdAt).toLocaleTimeString('th-TH', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    } catch {
+                      return null;
+                    }
+                  }
                   return (
                     <div
                       key={msg.id}
                       className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
                     >
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                          isOwn
-                            ? 'bg-primary-600'
-                            : 'bg-gradient-to-br from-primary-400 to-primary-600'
-                        }`}
-                      >
-                        {getAvatarInitial(
-                          msg.sender?.displayName,
-                          msg.sender?.avatarSeed
-                        )}
-                      </div>
+                      <Avatar
+                        src={msg.sender?.avatarUrl}
+                        displayName={msg.sender?.displayName}
+                        avatarSeed={msg.sender?.avatarSeed}
+                        size="sm"
+                        className={isOwn ? 'bg-primary-600' : ''}
+                      />
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                           isOwn

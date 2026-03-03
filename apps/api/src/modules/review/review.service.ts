@@ -65,7 +65,7 @@ export class ReviewService {
       where: { revieweeSessionId: sessionId },
       include: {
         reviewerSession: {
-          select: { id: true, displayName: true, avatarSeed: true },
+          select: { id: true, displayName: true, avatarSeed: true, avatarUrl: true },
         },
       },
       orderBy: { createdAt: "desc" },

@@ -6,7 +6,8 @@ import {
 } from "@nestjs/common";
 import { PrismaClient } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
-import type { ShipOrderInput } from "@hew/shared";
+import { SHIPPING_UPDATEABLE_STATUSES } from "@hew/shared";
+import type { ShipOrderInput, UpdateShippingInput } from "@hew/shared";
 
 type TransactionClient = Omit<
   PrismaClient,
@@ -95,5 +96,46 @@ export class ShipmentService {
     }
 
     return order.shipment;
+  }
+
+  async updateShipping(
+    orderId: string,
+    sessionId: string,
+    data: UpdateShippingInput,
+  ) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { shipment: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    if (order.travelerSessionId !== sessionId) {
+      throw new ForbiddenException(
+        "Only the traveler can update shipping information",
+      );
+    }
+
+    const status = order.status as (typeof SHIPPING_UPDATEABLE_STATUSES)[number];
+    if (!SHIPPING_UPDATEABLE_STATUSES.includes(status)) {
+      throw new BadRequestException(
+        `Shipping can only be updated when order is SHIPPED. Current: ${order.status}`,
+      );
+    }
+
+    if (!order.shipment) {
+      throw new NotFoundException("Shipment not found for this order");
+    }
+
+    const updateData: Partial<{ trackingNumber: string; carrier: string }> = {};
+    if (data.trackingNumber !== undefined) updateData.trackingNumber = data.trackingNumber;
+    if (data.carrier !== undefined) updateData.carrier = data.carrier;
+
+    return this.prisma.shipment.update({
+      where: { orderId },
+      data: updateData,
+    });
   }
 }

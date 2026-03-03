@@ -13,6 +13,7 @@ export class UsersService {
           select: {
             id: true,
             displayName: true,
+            avatarUrl: true,
             rating: true,
             reviewCount: true,
           },
@@ -40,7 +41,7 @@ export class UsersService {
         orderBy: { createdAt: "desc" },
         include: {
           reviewerSession: {
-            select: { id: true, displayName: true, avatarSeed: true },
+            select: { id: true, displayName: true, avatarSeed: true, avatarUrl: true },
           },
         },
       }),
@@ -57,10 +58,13 @@ export class UsersService {
       rating = Number(agg._avg.rating) || 0;
     }
 
+    const avatarUrl =
+      session.avatarUrl ?? session.registeredUser?.avatarUrl ?? null;
     return {
       sessionId: session.id,
       displayName: session.displayName,
       avatarSeed: session.avatarSeed,
+      avatarUrl,
       isRegistered: !!session.registeredUser,
       memberSince: session.createdAt.toISOString(),
       postCount,
@@ -75,6 +79,7 @@ export class UsersService {
           id: r.reviewerSession.id,
           displayName: r.reviewerSession.displayName,
           avatarSeed: r.reviewerSession.avatarSeed,
+          avatarUrl: r.reviewerSession.avatarUrl ?? null,
         },
       })),
     };

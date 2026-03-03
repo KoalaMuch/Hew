@@ -2,16 +2,19 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { User, Mail, Shield, LogOut, LogIn, Star, FileText } from 'lucide-react';
+import { useRef } from 'react';
+import { User, Mail, Shield, LogOut, LogIn, Star, FileText, Camera, X } from 'lucide-react';
 import {
   getProfile,
   getMyPosts,
   getReviewsForSession,
   updateSession,
+  uploadImage,
   logout as apiLogout,
 } from '@/lib/api';
+import { MAX_IMAGE_SIZE_MB, ALLOWED_IMAGE_TYPES } from '@hew/shared';
 import { useSession } from '@/lib/session-context';
-import { getAvatarInitial } from '@/lib/utils';
+import { Avatar } from '@/components/avatar';
 import { PostCard } from '@/components/post-card';
 import dynamic from 'next/dynamic';
 
@@ -23,6 +26,7 @@ interface ProfileData {
   sessionId: string;
   displayName: string;
   avatarSeed: string;
+  avatarUrl?: string | null;
   isRegistered: boolean;
   user: {
     id: string;
@@ -51,7 +55,7 @@ export default function ProfilePage() {
       viewCount: number;
       commentCount?: number;
       createdAt: string;
-      session: { displayName: string; avatarSeed: string };
+      session: { displayName: string; avatarSeed: string; avatarUrl?: string | null };
     }>
   >([]);
   const [reviews, setReviews] = useState<
@@ -60,7 +64,7 @@ export default function ProfilePage() {
       rating: number;
       comment: string | null;
       createdAt: string;
-      reviewerSession: { displayName: string; avatarSeed: string };
+      reviewerSession: { displayName: string; avatarSeed: string; avatarUrl?: string | null };
     }>
   >([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +76,9 @@ export default function ProfilePage() {
   const [editingAvatarSeed, setEditingAvatarSeed] = useState(false);
   const [avatarSeedValue, setAvatarSeedValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -108,6 +115,46 @@ export default function ProfilePage() {
       setEditingName(false);
     } catch {
       // error saving
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadError(null);
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      setUploadError('ขนาดไฟล์ต้องไม่เกิน 10MB');
+      return;
+    }
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+      setUploadError('รองรับเฉพาะ JPEG, PNG, WebP');
+      return;
+    }
+    setUploading(true);
+    try {
+      const { url } = await uploadImage(file, 'avatars');
+      await updateSession({ avatarUrl: url });
+      await refresh();
+      await fetchProfile();
+    } catch {
+      setUploadError('อัปโหลดไม่สำเร็จ');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setUploadError(null);
+    setSaving(true);
+    try {
+      await updateSession({ avatarUrl: null });
+      await refresh();
+      await fetchProfile();
+    } catch {
+      setUploadError('ลบรูปไม่สำเร็จ');
     } finally {
       setSaving(false);
     }
@@ -162,10 +209,46 @@ export default function ProfilePage() {
       {/* Avatar & Name */}
       <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-2xl font-bold text-white">
-            {getAvatarInitial(profile?.displayName, profile?.avatarSeed)}
+          <div className="relative shrink-0">
+            <Avatar
+              src={profile?.avatarUrl}
+              displayName={profile?.displayName}
+              avatarSeed={profile?.avatarSeed}
+              size="lg"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ALLOWED_IMAGE_TYPES.join(',')}
+              className="hidden"
+              onChange={handleAvatarUpload}
+              disabled={uploading}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition-opacity hover:bg-primary-700 disabled:opacity-50"
+              title="อัปโหลดรูปโปรไฟล์"
+            >
+              <Camera size={14} />
+            </button>
+            {profile?.avatarUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                disabled={saving}
+                className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                title="ลบรูปโปรไฟล์"
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
           <div className="flex-1">
+            {uploadError && (
+              <p className="mb-2 text-sm text-red-600">{uploadError}</p>
+            )}
             {editingName ? (
               <div className="flex items-center gap-2">
                 <input
@@ -345,12 +428,12 @@ export default function ProfilePage() {
             {reviews.slice(0, 5).map((review) => (
               <div key={review.id} className="rounded-xl bg-gray-50 p-4">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-xs font-bold text-white">
-                    {getAvatarInitial(
-                      review.reviewerSession?.displayName,
-                      review.reviewerSession?.avatarSeed
-                    )}
-                  </div>
+                  <Avatar
+                    src={review.reviewerSession?.avatarUrl}
+                    displayName={review.reviewerSession?.displayName}
+                    avatarSeed={review.reviewerSession?.avatarSeed}
+                    size="sm"
+                  />
                   <span className="font-medium text-gray-900">
                     {review.reviewerSession?.displayName || 'Anonymous'}
                   </span>

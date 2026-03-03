@@ -10,6 +10,7 @@ import { HealthController } from "../src/common/health.controller";
     ThrottlerModule.forRoot([
       { name: "short", ttl: 1, limit: 10000 },
       { name: "long", ttl: 1, limit: 10000 },
+      { name: "uploads", ttl: 1, limit: 10000 },
     ]),
     ...featureModules,
   ],

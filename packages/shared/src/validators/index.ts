@@ -53,6 +53,7 @@ export const shipOrderSchema = z.object({
 export const updateSessionSchema = z.object({
   displayName: z.string().min(1).max(50).optional(),
   avatarSeed: z.string().max(50).optional(),
+  avatarUrl: z.string().url().nullable().optional(),
 });
 
 export const registerSchema = z.object({
@@ -82,8 +83,24 @@ export const sendMessageSchema = z.object({
   roomId: z.string(),
   content: z.string().min(1).max(5000),
   imageUrl: z.string().url().optional(),
-  type: z.enum(["TEXT", "IMAGE", "OFFER_CARD", "SYSTEM"]).default("TEXT"),
+  type: z.enum(["TEXT", "IMAGE", "OFFER_CARD", "ORDER_CARD", "SYSTEM"]).default("TEXT"),
 });
+
+export const createOrderFromChatSchema = z.object({
+  roomId: z.string(),
+  orderName: z.string().min(1).max(200),
+  orderImageUrl: z.string().url().optional(),
+  productPrice: z.number().positive(),
+  shippingFee: z.number().min(0),
+});
+
+export const updateShippingSchema = z.object({
+  trackingNumber: z.string().max(100).optional(),
+  carrier: z.string().max(100).optional(),
+}).refine(
+  (data) => data.trackingNumber !== undefined || data.carrier !== undefined,
+  { message: "At least one of trackingNumber or carrier must be provided" },
+);
 
 export const createChatRoomSchema = z.object({
   tripId: z.string().optional(),
@@ -103,6 +120,8 @@ export type CreateReviewInput = z.infer<typeof createReviewSchema>;
 export type CreateDisputeInput = z.infer<typeof createDisputeSchema>;
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type CreateChatRoomInput = z.infer<typeof createChatRoomSchema>;
+export type CreateOrderFromChatInput = z.infer<typeof createOrderFromChatSchema>;
+export type UpdateShippingInput = z.infer<typeof updateShippingSchema>;
 
 export const createPostSchema = z.object({
   type: z.enum(["RUBHEW", "HAKHONG"]),

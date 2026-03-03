@@ -14,6 +14,7 @@ model Session {
   deviceFingerprint String?
   displayName       String    @default("Anonymous")
   avatarSeed        String    @default(cuid())
+  avatarUrl         String?
   registeredUserId  String?   @unique
   registeredUser    RegisteredUser? @relation(fields: [registeredUserId], references: [id])
   createdAt         DateTime  @default(now())
@@ -172,8 +173,12 @@ enum OfferStatus {
 
 model Order {
   id                  String      @id @default(cuid())
-  offerId             String      @unique
-  offer               Offer       @relation(fields: [offerId], references: [id])
+  offerId             String?     @unique
+  offer               Offer?      @relation(fields: [offerId], references: [id])
+  roomId              String?     @unique
+  room                ChatRoom?   @relation(fields: [roomId], references: [id])
+  orderName           String?     // For chat-originated orders
+  orderImageUrl       String?     // For chat-originated orders
   buyerSessionId      String
   buyerSession        Session     @relation("BuyerOrders", fields: [buyerSessionId], references: [id])
   travelerSessionId   String
@@ -200,6 +205,7 @@ model Order {
   @@index([buyerSessionId])
   @@index([travelerSessionId])
   @@index([status])
+  @@index([roomId])
 }
 
 enum OrderStatus {
@@ -341,6 +347,7 @@ model ChatRoom {
   updatedAt     DateTime @updatedAt
 
   messages ChatMessage[]
+  order    Order?
 
   @@index([participants])
 }
@@ -365,6 +372,7 @@ enum MessageType {
   TEXT
   IMAGE
   OFFER_CARD
+  ORDER_CARD
   SYSTEM
 }
 

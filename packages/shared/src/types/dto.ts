@@ -2,6 +2,7 @@ export interface SessionInfo {
   id: string;
   displayName: string;
   avatarSeed: string;
+  avatarUrl?: string | null;
 }
 
 export interface TripDto {
@@ -51,8 +52,11 @@ export interface OfferDto {
 
 export interface OrderDto {
   id: string;
-  offerId: string;
-  offer: OfferDto;
+  offerId?: string | null;
+  offer?: OfferDto | null;
+  roomId?: string | null;
+  orderName?: string | null;
+  orderImageUrl?: string | null;
   buyerSessionId: string;
   travelerSessionId: string;
   totalAmount: number;
@@ -125,6 +129,7 @@ export interface ProfileDto {
   sessionId: string;
   displayName: string;
   avatarSeed: string;
+  avatarUrl?: string | null;
   isRegistered: boolean;
   user: {
     id: string;
@@ -151,6 +156,7 @@ export interface PublicProfileDto {
   sessionId: string;
   displayName: string;
   avatarSeed: string;
+  avatarUrl?: string | null;
   isRegistered: boolean;
   memberSince: string;
   postCount: number;

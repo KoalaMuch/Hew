@@ -18,6 +18,7 @@ import { AdminModule } from "./modules/admin/admin.module";
 import { PostModule } from "./modules/post/post.module";
 import { CommentModule } from "./modules/comment/comment.module";
 import { UsersModule } from "./modules/users/users.module";
+import { UploadModule } from "./modules/upload/upload.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { PrismaModule } from "./common/prisma.module";
 import { HealthController } from "./common/health.controller";
@@ -40,6 +41,7 @@ export const featureModules = [
   PostModule,
   CommentModule,
   UsersModule,
+  UploadModule,
   AuthModule,
 ];
 
@@ -49,6 +51,7 @@ export const featureModules = [
     ThrottlerModule.forRoot([
       { name: "short", ttl: 1000, limit: 10 },
       { name: "long", ttl: 60000, limit: 100 },
+      { name: "uploads", ttl: 86400000, limit: 20 },
     ]),
     ...featureModules,
   ],

@@ -34,7 +34,7 @@ export class PostService {
         travelDate: data.travelDate ? new Date(data.travelDate) : undefined,
         budget: data.budget,
       },
-      include: { session: { select: { displayName: true, avatarSeed: true } } },
+      include: { session: { select: { displayName: true, avatarSeed: true, avatarUrl: true } } },
     });
 
     if (hashtags.length > 0) {
@@ -82,7 +82,7 @@ export class PostService {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { session: { select: { displayName: true, avatarSeed: true } } },
+        include: { session: { select: { displayName: true, avatarSeed: true, avatarUrl: true } } },
       }),
       this.prisma.post.count({ where }),
     ]);
@@ -93,7 +93,7 @@ export class PostService {
   async findById(id: string) {
     const post = await this.prisma.post.findUnique({
       where: { id },
-      include: { session: { select: { displayName: true, avatarSeed: true } } },
+      include: { session: { select: { displayName: true, avatarSeed: true, avatarUrl: true } } },
     });
     if (!post || post.status === "DELETED") {
       throw new NotFoundException("Post not found");
@@ -115,7 +115,7 @@ export class PostService {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { session: { select: { displayName: true, avatarSeed: true } } },
+        include: { session: { select: { displayName: true, avatarSeed: true, avatarUrl: true } } },
       }),
       this.prisma.post.count({ where }),
     ]);
@@ -144,7 +144,7 @@ export class PostService {
     return this.prisma.post.update({
       where: { id },
       data: updateData,
-      include: { session: { select: { displayName: true, avatarSeed: true } } },
+      include: { session: { select: { displayName: true, avatarSeed: true, avatarUrl: true } } },
     });
   }
 
@@ -166,6 +166,21 @@ export class PostService {
       where: { count: { gt: 0 } },
       orderBy: { count: "desc" },
       take: limit,
+    });
+  }
+
+  async searchHashtags(query: string, limit = 8) {
+    const q = query.replace(/^#/, "").toLowerCase().trim();
+    if (!q) {
+      return this.getTrendingHashtags(Math.min(limit, 20));
+    }
+    return this.prisma.postHashtag.findMany({
+      where: {
+        name: { contains: q, mode: "insensitive" },
+        count: { gt: 0 },
+      },
+      orderBy: { count: "desc" },
+      take: Math.min(limit, 20),
     });
   }
 }

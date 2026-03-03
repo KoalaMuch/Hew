@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { User, MapPin, Star, MessageSquare } from 'lucide-react';
 import { getPublicProfile, getPosts } from '@/lib/api';
 import { PostCard } from '@/components/post-card';
-import { getAvatarInitial } from '@/lib/utils';
+import { Avatar } from '@/components/avatar';
 
 interface PageProps {
   params: Promise<{ sessionId: string }>;
@@ -38,8 +38,6 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const postsRes = await getPosts({ sessionId, page: 1, limit: 20 });
   const userPosts = postsRes.data;
 
-  const avatarLetter = getAvatarInitial(profile.displayName, profile.avatarSeed);
-
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-6 md:pb-8">
       <Link
@@ -52,9 +50,12 @@ export default async function PublicProfilePage({ params }: PageProps) {
       {/* Profile header */}
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-2xl font-bold text-white">
-            {avatarLetter}
-          </div>
+          <Avatar
+            src={profile.avatarUrl}
+            displayName={profile.displayName}
+            avatarSeed={profile.avatarSeed}
+            size="lg"
+          />
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-bold text-gray-900">
               {profile.displayName}
@@ -122,12 +123,12 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 className="rounded-xl bg-gray-50 p-4"
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-xs font-bold text-white">
-                    {getAvatarInitial(
-                      review.reviewerSession?.displayName,
-                      review.reviewerSession?.avatarSeed
-                    )}
-                  </div>
+                  <Avatar
+                    src={review.reviewerSession?.avatarUrl}
+                    displayName={review.reviewerSession?.displayName}
+                    avatarSeed={review.reviewerSession?.avatarSeed}
+                    size="sm"
+                  />
                   <span className="font-medium text-gray-900">
                     {review.reviewerSession?.displayName || 'Anonymous'}
                   </span>

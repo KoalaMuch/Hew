@@ -6,7 +6,7 @@ import {
 import { PrismaService } from "../../common/prisma.service";
 import type { CreateCommentInput, UpdateCommentInput } from "@hew/shared";
 
-const SESSION_SELECT = { displayName: true, avatarSeed: true };
+const SESSION_SELECT = { displayName: true, avatarSeed: true, avatarUrl: true };
 
 @Injectable()
 export class CommentService {

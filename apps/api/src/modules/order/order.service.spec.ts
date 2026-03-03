@@ -210,7 +210,9 @@ describe("OrderService", () => {
 
   describe("updateStatus", () => {
     it("updates order status and creates audit log", async () => {
+      const existingOrder = { id: "order-1", status: "ESCROW_PENDING" };
       const updatedOrder = { id: "order-1", status: "PAID" };
+      mockPrisma.order.findUnique.mockResolvedValue(existingOrder);
       mockPrisma.order.update.mockResolvedValue(updatedOrder);
       mockPrisma.auditLog.create.mockResolvedValue({});
 
@@ -227,12 +229,14 @@ describe("OrderService", () => {
           action: "ORDER_STATUS_UPDATE",
           entity: "Order",
           entityId: "order-1",
-          metadata: { status: "PAID" },
+          metadata: { from: "ESCROW_PENDING", to: "PAID" },
         },
       });
     });
 
     it("records null sessionId when not provided", async () => {
+      const existingOrder = { id: "order-1", status: "CREATED" };
+      mockPrisma.order.findUnique.mockResolvedValue(existingOrder);
       mockPrisma.order.update.mockResolvedValue({ id: "order-1", status: "CANCELLED" });
       mockPrisma.auditLog.create.mockResolvedValue({});
 

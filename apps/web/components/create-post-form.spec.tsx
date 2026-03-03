@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CreatePostForm } from "./create-post-form";
+import { SessionProvider } from "@/lib/session-context";
 
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();
@@ -15,7 +16,22 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/api", () => ({
   createPost: vi.fn(),
+  createSession: vi.fn().mockResolvedValue({ id: "test-session" }),
+  getSession: vi.fn().mockResolvedValue({
+    id: "test-session",
+    displayName: "Test User",
+    avatarSeed: "seed",
+  }),
+  setSessionToken: vi.fn(),
 }));
+
+function renderWithSession(ui: React.ReactElement) {
+  return render(
+    <SessionProvider>
+      {ui}
+    </SessionProvider>,
+  );
+}
 
 describe("CreatePostForm", () => {
   beforeEach(() => {
@@ -23,7 +39,7 @@ describe("CreatePostForm", () => {
   });
 
   it("renders with RUBHEW type selected by default", () => {
-    render(<CreatePostForm />);
+    renderWithSession(<CreatePostForm />);
 
     const rubhewBtn = screen.getByText("รับหิ้ว", { selector: "button" });
     expect(rubhewBtn.className).toContain("border-blue-500");
@@ -31,7 +47,7 @@ describe("CreatePostForm", () => {
 
   it("switches to HAKHONG type", async () => {
     const user = userEvent.setup();
-    render(<CreatePostForm />);
+    renderWithSession(<CreatePostForm />);
 
     await user.click(screen.getByText("หาของ", { selector: "button" }));
 
@@ -40,7 +56,7 @@ describe("CreatePostForm", () => {
   });
 
   it("disables submit when content is empty", () => {
-    render(<CreatePostForm />);
+    renderWithSession(<CreatePostForm />);
 
     const submitButton = screen.getByText("โพสต์", { selector: "button" });
     expect(submitButton).toBeDisabled();
@@ -48,7 +64,7 @@ describe("CreatePostForm", () => {
 
   it("enables submit when content is entered", async () => {
     const user = userEvent.setup();
-    render(<CreatePostForm />);
+    renderWithSession(<CreatePostForm />);
 
     const textarea = screen.getAllByRole("textbox")[0];
     await user.type(textarea, "Going to Japan!");
@@ -62,10 +78,11 @@ describe("CreatePostForm", () => {
     (createPost as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "post-1" });
 
     const user = userEvent.setup();
-    render(<CreatePostForm />);
+    renderWithSession(<CreatePostForm />);
 
     const textarea = screen.getAllByRole("textbox")[0];
     await user.type(textarea, "Going to Japan!");
+    await user.click(screen.getByText("เพิ่มรายละเอียด"));
     await user.type(screen.getByPlaceholderText("ประเทศ"), "Japan");
 
     const submitButton = screen.getByText("โพสต์", { selector: "button" });
@@ -88,7 +105,7 @@ describe("CreatePostForm", () => {
     );
 
     const user = userEvent.setup();
-    render(<CreatePostForm />);
+    renderWithSession(<CreatePostForm />);
 
     const textarea = screen.getAllByRole("textbox")[0];
     await user.type(textarea, "Test content");
@@ -101,7 +118,7 @@ describe("CreatePostForm", () => {
 
   it("shows character count", async () => {
     const user = userEvent.setup();
-    render(<CreatePostForm />);
+    renderWithSession(<CreatePostForm />);
 
     expect(screen.getByText("0/5000")).toBeInTheDocument();
 

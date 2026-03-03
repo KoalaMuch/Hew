@@ -89,6 +89,17 @@ export class PostController {
     );
   }
 
+  @Get("hashtags/search")
+  async searchHashtags(
+    @Query("q") q?: string,
+    @Query("limit") limit?: string,
+  ) {
+    return this.postService.searchHashtags(
+      q ?? "",
+      limit ? parseInt(limit, 10) : undefined,
+    );
+  }
+
   @Get(":id")
   async findById(@Param("id") id: string) {
     return this.postService.findById(id);

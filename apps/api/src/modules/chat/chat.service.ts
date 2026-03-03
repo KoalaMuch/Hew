@@ -93,7 +93,7 @@ export class ChatService {
       orderBy: { createdAt: "desc" },
       include: {
         sender: {
-          select: { id: true, displayName: true, avatarSeed: true },
+          select: { id: true, displayName: true, avatarSeed: true, avatarUrl: true },
         },
       },
     });
@@ -128,7 +128,56 @@ export class ChatService {
       },
       include: {
         sender: {
-          select: { id: true, displayName: true, avatarSeed: true },
+          select: { id: true, displayName: true, avatarSeed: true, avatarUrl: true },
+        },
+      },
+    });
+  }
+
+  async sendOrderCardMessage(
+    roomId: string,
+    senderId: string,
+    order: {
+      id: string;
+      orderName: string | null;
+      orderImageUrl: string | null;
+      totalAmount: { toString(): string };
+      status: string;
+      shipment?: { trackingNumber: string | null; carrier: string | null } | null;
+    },
+  ) {
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+    });
+
+    if (!room) {
+      throw new NotFoundException("Room not found");
+    }
+
+    if (!room.participants.includes(senderId)) {
+      throw new ForbiddenException("You are not a participant of this room");
+    }
+
+    const content = JSON.stringify({
+      orderId: order.id,
+      orderName: order.orderName,
+      orderImageUrl: order.orderImageUrl,
+      totalAmount: Number(order.totalAmount),
+      status: order.status,
+      trackingNumber: order.shipment?.trackingNumber ?? null,
+      carrier: order.shipment?.carrier ?? null,
+    });
+
+    return this.prisma.chatMessage.create({
+      data: {
+        roomId,
+        senderId,
+        content,
+        type: "ORDER_CARD",
+      },
+      include: {
+        sender: {
+          select: { id: true, displayName: true, avatarSeed: true, avatarUrl: true },
         },
       },
     });

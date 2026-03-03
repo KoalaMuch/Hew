@@ -40,6 +40,9 @@ export {
   SESSION_TOKEN_HEADER,
   MAX_IMAGE_SIZE_MB,
   MAX_IMAGES_PER_UPLOAD,
+  MAX_IMAGES_PER_POST,
+  MAX_POST_CONTENT_LENGTH,
+  MAX_HASHTAGS_PER_POST,
   ALLOWED_IMAGE_TYPES,
 } from "./constants/index";
 
@@ -50,6 +53,8 @@ export {
   acceptOfferSchema,
   guestCheckoutSchema,
   shipOrderSchema,
+  createOrderFromChatSchema,
+  updateShippingSchema,
   updateSessionSchema,
   registerSchema,
   loginSchema,
@@ -62,12 +67,23 @@ export {
   createCommentSchema,
   updateCommentSchema,
 } from "./validators/index";
+export {
+  canTransition,
+  getValidTransitions,
+  assertValidTransition,
+  TERMINAL_STATUSES,
+  CANCELLABLE_STATUSES,
+  SHIPPING_UPDATEABLE_STATUSES,
+} from "./order-state-machine";
+
 export type {
   CreateTripInput,
   CreateItemRequestInput,
   CreateOfferInput,
   GuestCheckoutInput,
   ShipOrderInput,
+  CreateOrderFromChatInput,
+  UpdateShippingInput,
   UpdateSessionInput,
   RegisterInput,
   LoginInput,

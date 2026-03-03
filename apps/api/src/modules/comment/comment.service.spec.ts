@@ -43,7 +43,7 @@ describe("CommentService", () => {
         take: 20,
         orderBy: { createdAt: "desc" },
         include: {
-          session: { select: { displayName: true, avatarSeed: true } },
+          session: { select: { displayName: true, avatarSeed: true, avatarUrl: true } },
         },
       });
     });

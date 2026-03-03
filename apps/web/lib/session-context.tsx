@@ -13,6 +13,7 @@ interface Session {
   id: string;
   displayName?: string;
   avatarSeed?: string;
+  avatarUrl?: string | null;
 }
 
 interface SessionContextValue {

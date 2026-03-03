@@ -12,29 +12,43 @@ export class SessionService {
   }
 
   async getSession(id: string) {
-    return this.prisma.session.findUnique({
+    const session = await this.prisma.session.findUnique({
       where: { id },
+      include: {
+        registeredUser: { select: { avatarUrl: true } },
+      },
     });
+    if (!session) return null;
+    const { registeredUser, ...rest } = session;
+    return {
+      ...rest,
+      avatarUrl: session.avatarUrl ?? registeredUser?.avatarUrl ?? null,
+    };
   }
 
   async updateSession(
     id: string,
-    data: { displayName?: string; avatarSeed?: string },
+    data: { displayName?: string; avatarSeed?: string; avatarUrl?: string | null },
   ) {
     const session = await this.prisma.session.findUnique({
       where: { id },
       select: { registeredUserId: true },
     });
 
-    if (session?.registeredUserId && data.displayName !== undefined) {
+    const sessionData: Record<string, unknown> = { ...data };
+    const userData: Record<string, unknown> = {};
+    if (data.displayName !== undefined) userData.displayName = data.displayName;
+    if (data.avatarUrl !== undefined) userData.avatarUrl = data.avatarUrl;
+
+    if (session?.registeredUserId && Object.keys(userData).length > 0) {
       await this.prisma.$transaction([
         this.prisma.session.update({
           where: { id },
-          data,
+          data: sessionData,
         }),
         this.prisma.registeredUser.update({
-          where: { id: session.registeredUserId },
-          data: { displayName: data.displayName },
+          where: { id: session!.registeredUserId! },
+          data: userData,
         }),
       ]);
       return this.prisma.session.findUniqueOrThrow({ where: { id } });
@@ -42,7 +56,7 @@ export class SessionService {
 
     return this.prisma.session.update({
       where: { id },
-      data,
+      data: sessionData,
     });
   }
 

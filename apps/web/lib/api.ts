@@ -174,6 +174,25 @@ export async function chargePayment(data: {
   });
 }
 
+export async function createOrderFromChat(data: {
+  roomId: string;
+  orderName: string;
+  orderImageUrl?: string;
+  productPrice: number;
+  shippingFee: number;
+}) {
+  return fetchApi<OrderDto>('/orders/from-chat', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function cancelOrder(orderId: string) {
+  return fetchApi<OrderDto>(`/orders/${orderId}/cancel`, {
+    method: 'PATCH',
+  });
+}
+
 export async function shipOrder(
   orderId: string,
   data: {
@@ -187,6 +206,16 @@ export async function shipOrder(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+}
+
+export async function updateOrderShipping(
+  orderId: string,
+  data: { trackingNumber?: string; carrier?: string }
+) {
+  return fetchApi<{ trackingNumber: string | null; carrier: string | null }>(
+    `/orders/${orderId}/shipment`,
+    { method: 'PATCH', body: JSON.stringify(data) }
+  );
 }
 
 export async function confirmDelivery(orderId: string) {
@@ -281,6 +310,12 @@ export async function getTrendingHashtags(limit?: number) {
   );
 }
 
+export async function searchHashtags(q: string, limit?: number) {
+  return fetchApi<Array<{ id: string; name: string; count: number }>>(
+    `/posts/hashtags/search${buildQueryString({ q, limit })}`
+  );
+}
+
 // Comments
 export async function getComments(postId: string, params?: { page?: number; limit?: number }) {
   return fetchApi<PaginatedResponse<CommentDto>>(
@@ -310,7 +345,7 @@ export async function deleteComment(postId: string, commentId: string) {
 
 // Session
 export async function getSession() {
-  return fetchApi<{ id: string; displayName?: string; avatarSeed?: string } | null>(
+  return fetchApi<{ id: string; displayName?: string; avatarSeed?: string; avatarUrl?: string | null } | null>(
     '/sessions/me'
   );
 }
@@ -325,11 +360,34 @@ export async function createSession(fingerprint?: string) {
 export async function updateSession(data: {
   displayName?: string;
   avatarSeed?: string;
+  avatarUrl?: string | null;
 }) {
   return fetchApi<{ id: string }>('/sessions/me', {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+}
+
+export async function uploadImage(file: File, folder?: 'avatars' | 'posts') {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (folder) formData.append('folder', folder);
+  const url = `${getApiBase()}/upload`;
+  const headers: Record<string, string> = {};
+  if (sessionToken) {
+    headers['X-Session-Id'] = sessionToken;
+  }
+  const res = await fetch(url, {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+    headers,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error((err as { message?: string }).message || res.statusText);
+  }
+  return res.json() as Promise<{ url: string }>;
 }
 
 // Auth

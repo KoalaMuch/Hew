@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -6,7 +7,13 @@ import {
 import type { OrderStatus } from "@hew/db";
 import { PrismaClient } from "@hew/db";
 import { PrismaService } from "../../common/prisma.service";
-import { generateIdempotencyKey } from "@hew/shared";
+import {
+  assertValidTransition,
+  calculateCommission,
+  CANCELLABLE_STATUSES,
+  generateIdempotencyKey,
+} from "@hew/shared";
+import type { CreateOrderFromChatInput } from "@hew/shared";
 
 type TransactionClient = Omit<
   PrismaClient,
@@ -16,6 +23,58 @@ type TransactionClient = Omit<
 @Injectable()
 export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async createFromChat(
+    travelerSessionId: string,
+    data: CreateOrderFromChatInput,
+    tx?: TransactionClient,
+  ) {
+    const client = tx ?? this.prisma;
+
+    const room = await client.chatRoom.findUnique({
+      where: { id: data.roomId },
+      include: { order: true },
+    });
+
+    if (!room) {
+      throw new NotFoundException("Room not found");
+    }
+
+    if (!room.participants.includes(travelerSessionId)) {
+      throw new ForbiddenException("You are not a participant of this room");
+    }
+
+    if (room.order) {
+      throw new BadRequestException("This room already has an order");
+    }
+
+    const buyerSessionId = room.participants.find((p) => p !== travelerSessionId);
+    if (!buyerSessionId) {
+      throw new BadRequestException("Room must have exactly two participants");
+    }
+
+    const { commissionFee, totalPrice, payoutAmount } = calculateCommission(
+      data.productPrice,
+      data.shippingFee,
+    );
+
+    const idempotencyKey = generateIdempotencyKey();
+
+    return client.order.create({
+      data: {
+        roomId: data.roomId,
+        orderName: data.orderName,
+        orderImageUrl: data.orderImageUrl,
+        buyerSessionId,
+        travelerSessionId,
+        totalAmount: totalPrice,
+        commissionAmount: commissionFee,
+        payoutAmount,
+        status: "ESCROW_PENDING",
+        idempotencyKey,
+      },
+    });
+  }
 
   async createFromOffer(
     offer: {
@@ -112,6 +171,16 @@ export class OrderService {
   ) {
     const client = tx ?? this.prisma;
 
+    const existing = await client.order.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new NotFoundException("Order not found");
+    }
+
+    assertValidTransition(existing.status as OrderStatus, status);
+
     const order = await client.order.update({
       where: { id },
       data: { status },
@@ -123,10 +192,29 @@ export class OrderService {
         action: "ORDER_STATUS_UPDATE",
         entity: "Order",
         entityId: id,
-        metadata: { status },
+        metadata: { from: existing.status, to: status },
       },
     });
 
     return order;
+  }
+
+  async cancel(id: string, sessionId: string) {
+    const order = await this.findById(id);
+
+    const isBuyer = order.buyerSessionId === sessionId;
+    const isTraveler = order.travelerSessionId === sessionId;
+    if (!isBuyer && !isTraveler) {
+      throw new ForbiddenException("You do not have access to this order");
+    }
+
+    const status = order.status as OrderStatus;
+    if (!CANCELLABLE_STATUSES.includes(status)) {
+      throw new BadRequestException(
+        `Order cannot be cancelled from status ${status}. Cancellable: ${CANCELLABLE_STATUSES.join(", ")}`,
+      );
+    }
+
+    return this.updateStatus(id, "CANCELLED", sessionId);
   }
 }

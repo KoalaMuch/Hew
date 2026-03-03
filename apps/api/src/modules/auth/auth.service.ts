@@ -69,11 +69,16 @@ export class AuthService {
       });
     }
 
+    const userWithAvatar = await this.prisma.registeredUser.findUnique({
+      where: { id: user.id },
+      select: { avatarUrl: true },
+    });
     await this.prisma.session.update({
       where: { id: sessionId },
       data: {
         registeredUserId: user.id,
         displayName: user.displayName,
+        avatarUrl: userWithAvatar?.avatarUrl ?? undefined,
       },
     });
 
@@ -110,6 +115,10 @@ export class AuthService {
       sessionId: session.id,
       displayName: session.displayName,
       avatarSeed: session.avatarSeed,
+      avatarUrl:
+        session.avatarUrl ??
+        session.registeredUser?.avatarUrl ??
+        null,
       isRegistered: !!session.registeredUser,
       user: session.registeredUser,
     };
@@ -169,11 +178,16 @@ export class AuthService {
       }
     }
 
+    const userWithAvatar = await this.prisma.registeredUser.findUnique({
+      where: { id: user.id },
+      select: { avatarUrl: true },
+    });
     await this.prisma.session.update({
       where: { id: sessionId },
       data: {
         registeredUserId: user.id,
         displayName: user.displayName,
+        avatarUrl: userWithAvatar?.avatarUrl ?? undefined,
       },
     });
 

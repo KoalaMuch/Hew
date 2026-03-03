@@ -4,6 +4,7 @@ import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Calendar, Eye, MessageSquare, Trash2 } from 'lucide-react';
+import { Avatar } from '@/components/avatar';
 import { PostTypeBadge } from './post-type-badge';
 import { HashtagChip } from './hashtag-chip';
 
@@ -24,6 +25,7 @@ interface PostCardProps {
   session: {
     displayName: string;
     avatarSeed: string;
+    avatarUrl?: string | null;
   };
   onHashtagClick?: (tag: string) => void;
   onDelete?: (id: string) => void;
@@ -78,13 +80,13 @@ export const PostCard = memo(function PostCard({
     <article className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       {/* Author row */}
       <div className="flex items-center gap-3">
-        <Link
-          href={`/users/${sessionId}`}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-sm font-bold text-white hover:ring-2 hover:ring-primary-300"
-        >
-          {(session.displayName && session.displayName !== 'Anonymous')
-            ? session.displayName.charAt(0).toUpperCase()
-            : (session.avatarSeed?.charAt(0).toUpperCase() || '?')}
+        <Link href={`/users/${sessionId}`} className="shrink-0 hover:ring-2 hover:ring-primary-300 hover:rounded-full">
+          <Avatar
+            src={session.avatarUrl}
+            displayName={session.displayName}
+            avatarSeed={session.avatarSeed}
+            size="md"
+          />
         </Link>
         <div className="min-w-0 flex-1">
           <Link

@@ -9,7 +9,7 @@ import {
   deleteComment,
 } from '@/lib/api';
 import { useSession } from '@/lib/session-context';
-import { getAvatarInitial } from '@/lib/utils';
+import { Avatar } from '@/components/avatar';
 import type { CommentDto } from '@hew/shared';
 
 interface CommentsSectionProps {
@@ -153,9 +153,12 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
               key={comment.id}
               className="flex gap-3 rounded-xl bg-gray-50/50 p-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-sm font-bold text-white">
-                {getAvatarInitial(comment.session?.displayName, comment.session?.avatarSeed)}
-              </div>
+              <Avatar
+                src={comment.session?.avatarUrl}
+                displayName={comment.session?.displayName}
+                avatarSeed={comment.session?.avatarSeed}
+                size="sm"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-gray-900">

@@ -56,15 +56,22 @@ describe("SessionService", () => {
   });
 
   describe("getSession", () => {
-    it("returns session by id", async () => {
-      const mockSession = { id: "session-1", displayName: "Test" };
+    it("returns session by id with merged avatarUrl", async () => {
+      const mockSession = {
+        id: "session-1",
+        displayName: "Test",
+        avatarUrl: null,
+        registeredUser: { avatarUrl: "https://example.com/avatar.jpg" },
+      };
       mockPrisma.session.findUnique.mockResolvedValue(mockSession);
 
       const result = await service.getSession("session-1");
       expect(mockPrisma.session.findUnique).toHaveBeenCalledWith({
         where: { id: "session-1" },
+        include: { registeredUser: { select: { avatarUrl: true } } },
       });
-      expect(result).toEqual(mockSession);
+      expect(result?.avatarUrl).toBe("https://example.com/avatar.jpg");
+      expect(result?.id).toBe("session-1");
     });
 
     it("returns null for non-existent session", async () => {

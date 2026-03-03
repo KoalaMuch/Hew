@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getPostById } from '@/lib/api';
 import { CommentsSection } from '@/components/comments-section';
+import { Avatar } from '@/components/avatar';
 import { ChatButton } from './chat-button';
 
 interface PageProps {
@@ -49,7 +50,7 @@ interface PostData {
   budget?: number;
   viewCount: number;
   createdAt: string;
-  session: { displayName: string; avatarSeed: string };
+  session: { displayName: string; avatarSeed: string; avatarUrl?: string | null };
 }
 
 function renderContent(content: string) {
@@ -108,13 +109,13 @@ export default async function PostDetailPage({ params }: PageProps) {
       <article className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         {/* Author */}
         <div className="flex items-center gap-3">
-          <Link
-            href={`/users/${post.sessionId}`}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-base font-bold text-white hover:ring-2 hover:ring-primary-300"
-          >
-            {(post.session.displayName && post.session.displayName !== 'Anonymous')
-              ? post.session.displayName.charAt(0).toUpperCase()
-              : (post.session.avatarSeed?.charAt(0).toUpperCase() || '?')}
+          <Link href={`/users/${post.sessionId}`} className="shrink-0 hover:ring-2 hover:ring-primary-300 hover:rounded-full">
+            <Avatar
+              src={post.session.avatarUrl}
+              displayName={post.session.displayName}
+              avatarSeed={post.session.avatarSeed}
+              size="lg"
+            />
           </Link>
           <div>
             <Link
