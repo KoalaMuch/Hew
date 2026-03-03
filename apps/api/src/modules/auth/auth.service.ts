@@ -62,23 +62,20 @@ export class AuthService {
       where: { registeredUserId: user.id },
     });
 
-    if (existingSession) {
+    if (existingSession && existingSession.id !== sessionId) {
       await this.prisma.session.update({
-        where: { id: sessionId },
-        data: {
-          registeredUserId: user.id,
-          displayName: user.displayName,
-        },
-      });
-    } else {
-      await this.prisma.session.update({
-        where: { id: sessionId },
-        data: {
-          registeredUserId: user.id,
-          displayName: user.displayName,
-        },
+        where: { id: existingSession.id },
+        data: { registeredUserId: null },
       });
     }
+
+    await this.prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        registeredUserId: user.id,
+        displayName: user.displayName,
+      },
+    });
 
     return {
       id: user.id,

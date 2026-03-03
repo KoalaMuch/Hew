@@ -69,6 +69,8 @@ jobs:
 
       - name: Integration tests
         run: pnpm --filter @hew/api test:integration
+        env:
+          OTEL_SDK_DISABLED: "true"
 
       - name: Build
         run: pnpm build

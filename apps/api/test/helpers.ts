@@ -1,4 +1,5 @@
 import type { INestApplication } from "@nestjs/common";
+import type { PrismaService } from "../src/common/prisma.service";
 import request from "supertest";
 import { SESSION_COOKIE_NAME } from "@hew/shared";
 
@@ -53,4 +54,56 @@ export async function createAuthenticatedSession(
     .expect(201);
 
   return cookie;
+}
+
+/**
+ * Creates a full offer chain (sessions + item request + offer)
+ * then an order linked to the offer, suitable for order/payment tests.
+ */
+export async function seedTestOrder(
+  app: INestApplication,
+  prisma: PrismaService,
+  overrides: { status?: string } = {},
+) {
+  const buyerCookie = await createSessionCookie(app);
+  const travelerCookie = await createSessionCookie(app);
+
+  const buyerSessionId = buyerCookie.split("=")[1];
+  const travelerSessionId = travelerCookie.split("=")[1];
+
+  const itemRequest = await prisma.itemRequest.create({
+    data: {
+      sessionId: buyerSessionId,
+      title: "Test item",
+      countries: ["Japan"],
+    },
+  });
+
+  const offer = await prisma.offer.create({
+    data: {
+      itemRequestId: itemRequest.id,
+      travelerSessionId,
+      buyerSessionId,
+      productPrice: 1000,
+      shippingFee: 50,
+      commissionFee: 75,
+      totalPrice: 1125,
+      status: "ACCEPTED",
+    },
+  });
+
+  const order = await prisma.order.create({
+    data: {
+      offerId: offer.id,
+      buyerSessionId,
+      travelerSessionId,
+      totalAmount: 1125,
+      commissionAmount: 75,
+      payoutAmount: 1050,
+      status: (overrides.status as "PAID") || "PAID",
+      idempotencyKey: `test-${Date.now()}-${Math.random()}`,
+    },
+  });
+
+  return { order, offer, itemRequest, buyerCookie, travelerCookie, buyerSessionId, travelerSessionId };
 }

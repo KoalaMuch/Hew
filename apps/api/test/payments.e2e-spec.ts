@@ -7,7 +7,7 @@ import {
   cleanDatabase,
   closeTestApp,
 } from "./setup";
-import { createSessionCookie } from "./helpers";
+import { createSessionCookie, seedTestOrder } from "./helpers";
 
 describe("Payments Endpoints (e2e)", () => {
   beforeAll(async () => {
@@ -23,29 +23,7 @@ describe("Payments Endpoints (e2e)", () => {
   });
 
   async function seedOrderForPayment() {
-    const prisma = getPrisma();
-    const app = getApp();
-
-    const buyerCookie = await createSessionCookie(app);
-    const travelerCookie = await createSessionCookie(app);
-
-    const buyerSessionId = buyerCookie.split("=")[1];
-    const travelerSessionId = travelerCookie.split("=")[1];
-
-    const order = await prisma.order.create({
-      data: {
-        buyerSessionId,
-        travelerSessionId,
-        offerId: null as unknown as string,
-        totalAmount: 1075,
-        commissionAmount: 75,
-        payoutAmount: 1000,
-        status: "ESCROW_PENDING",
-        idempotencyKey: `test-${Date.now()}`,
-      },
-    });
-
-    return { order, buyerCookie, travelerCookie, buyerSessionId, travelerSessionId };
+    return seedTestOrder(getApp(), getPrisma(), { status: "ESCROW_PENDING" });
   }
 
   describe("POST /api/payments/webhook/omise", () => {

@@ -20,6 +20,25 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { PrismaModule } from "./common/prisma.module";
 import { HealthController } from "./common/health.controller";
 
+export const featureModules = [
+  PrismaModule,
+  SessionModule,
+  TripModule,
+  ItemRequestModule,
+  OfferModule,
+  OrderModule,
+  PaymentModule,
+  ShipmentModule,
+  PayoutModule,
+  ChatModule,
+  DisputeModule,
+  ReviewModule,
+  NotificationModule,
+  AdminModule,
+  PostModule,
+  AuthModule,
+];
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -27,22 +46,7 @@ import { HealthController } from "./common/health.controller";
       { name: "short", ttl: 1000, limit: 10 },
       { name: "long", ttl: 60000, limit: 100 },
     ]),
-    PrismaModule,
-    SessionModule,
-    TripModule,
-    ItemRequestModule,
-    OfferModule,
-    OrderModule,
-    PaymentModule,
-    ShipmentModule,
-    PayoutModule,
-    ChatModule,
-    DisputeModule,
-    ReviewModule,
-    NotificationModule,
-    AdminModule,
-    PostModule,
-    AuthModule,
+    ...featureModules,
   ],
   controllers: [HealthController],
   providers: [

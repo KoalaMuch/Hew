@@ -3,6 +3,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   UseGuards,
@@ -37,6 +39,7 @@ export class PaymentController {
   }
 
   @Post("webhook/omise")
+  @HttpCode(HttpStatus.OK)
   async omiseWebhook(@Body() payload: unknown) {
     if (
       !payload ||
