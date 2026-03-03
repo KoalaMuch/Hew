@@ -83,7 +83,7 @@ describe("AuthModal", () => {
     expect(screen.getByText("Google")).toBeInTheDocument();
     expect(screen.getByText("LINE")).toBeInTheDocument();
     expect(screen.getByText("Facebook")).toBeInTheDocument();
-    expect(screen.getByText("Apple")).toBeInTheDocument();
+    expect(screen.queryByText("Apple")).not.toBeInTheDocument();
   });
 
   it("submits login form", async () => {
