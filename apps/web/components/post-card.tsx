@@ -3,12 +3,13 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Calendar, Eye, Trash2 } from 'lucide-react';
+import { MapPin, Calendar, Eye, MessageSquare, Trash2 } from 'lucide-react';
 import { PostTypeBadge } from './post-type-badge';
 import { HashtagChip } from './hashtag-chip';
 
 interface PostCardProps {
   id: string;
+  sessionId: string;
   type: 'RUBHEW' | 'HAKHONG';
   content: string;
   hashtags: string[];
@@ -18,6 +19,7 @@ interface PostCardProps {
   travelDate?: string;
   budget?: number;
   viewCount: number;
+  commentCount?: number;
   createdAt: string;
   session: {
     displayName: string;
@@ -54,6 +56,7 @@ function renderContent(content: string) {
 
 export const PostCard = memo(function PostCard({
   id,
+  sessionId,
   type,
   content,
   hashtags,
@@ -63,6 +66,7 @@ export const PostCard = memo(function PostCard({
   travelDate,
   budget,
   viewCount,
+  commentCount = 0,
   createdAt,
   session,
   onHashtagClick,
@@ -74,13 +78,21 @@ export const PostCard = memo(function PostCard({
     <article className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       {/* Author row */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-sm font-bold text-white">
-          {session.avatarSeed?.charAt(0).toUpperCase() || '?'}
-        </div>
+        <Link
+          href={`/users/${sessionId}`}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-sm font-bold text-white hover:ring-2 hover:ring-primary-300"
+        >
+          {(session.displayName && session.displayName !== 'Anonymous')
+            ? session.displayName.charAt(0).toUpperCase()
+            : (session.avatarSeed?.charAt(0).toUpperCase() || '?')}
+        </Link>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-gray-900">
+          <Link
+            href={`/users/${sessionId}`}
+            className="truncate text-sm font-semibold text-gray-900 hover:text-primary-600"
+          >
             {session.displayName}
-          </p>
+          </Link>
           <p className="text-xs text-gray-400">{timeAgo(createdAt)}</p>
         </div>
         <PostTypeBadge type={type} />
@@ -156,9 +168,14 @@ export const PostCard = memo(function PostCard({
 
       {/* Footer */}
       <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
-        <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-          <Eye size={13} /> {viewCount}
-        </span>
+        <div className="flex items-center gap-4 text-xs text-gray-400">
+          <span className="inline-flex items-center gap-1">
+            <Eye size={13} /> {viewCount}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <MessageSquare size={13} /> {commentCount}
+          </span>
+        </div>
         <Link
           href={`/posts/${id}`}
           className="text-xs font-medium text-primary-600 hover:text-primary-700"

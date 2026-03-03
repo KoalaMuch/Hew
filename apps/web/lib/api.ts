@@ -4,10 +4,12 @@ import type {
   OfferDto,
   OrderDto,
   PostDto,
+  CommentDto,
   ChatRoomDto,
   ChatMessageDto,
   PaginatedResponse,
   ProfileDto,
+  PublicProfileDto,
 } from '@hew/shared';
 
 const DEV_API_URL = 'http://localhost:3000/api';
@@ -222,6 +224,7 @@ export async function getPosts(params?: {
   hashtag?: string;
   search?: string;
   country?: string;
+  sessionId?: string;
   page?: number;
   limit?: number;
 }) {
@@ -278,6 +281,33 @@ export async function getTrendingHashtags(limit?: number) {
   );
 }
 
+// Comments
+export async function getComments(postId: string, params?: { page?: number; limit?: number }) {
+  return fetchApi<PaginatedResponse<CommentDto>>(
+    `/posts/${postId}/comments${buildQueryString(params)}`
+  );
+}
+
+export async function createComment(postId: string, data: { content: string }) {
+  return fetchApi<CommentDto>(`/posts/${postId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateComment(postId: string, commentId: string, data: { content: string }) {
+  return fetchApi<CommentDto>(`/posts/${postId}/comments/${commentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteComment(postId: string, commentId: string) {
+  return fetchApi<void>(`/posts/${postId}/comments/${commentId}`, {
+    method: 'DELETE',
+  });
+}
+
 // Session
 export async function getSession() {
   return fetchApi<{ id: string; displayName?: string; avatarSeed?: string } | null>(
@@ -323,6 +353,22 @@ export async function login(data: { email: string; password: string }) {
 
 export async function getProfile() {
   return fetchApi<ProfileDto>('/auth/profile');
+}
+
+export async function getPublicProfile(sessionId: string) {
+  return fetchApi<PublicProfileDto>(`/users/${sessionId}/profile`);
+}
+
+export async function getReviewsForSession(sessionId: string) {
+  return fetchApi<
+    Array<{
+      id: string;
+      rating: number;
+      comment: string | null;
+      createdAt: string;
+      reviewerSession: { displayName: string; avatarSeed: string };
+    }>
+  >(`/reviews${buildQueryString({ sessionId })}`);
 }
 
 export async function logout() {

@@ -20,10 +20,13 @@ export type {
   OfferDto,
   OrderDto,
   PostDto,
+  CommentDto,
   ChatRoomDto,
   ChatMessageDto,
   PaginatedResponse,
   ProfileDto,
+  ReviewDto,
+  PublicProfileDto,
 } from "./types/dto";
 
 export {
@@ -56,6 +59,8 @@ export {
   createChatRoomSchema,
   createPostSchema,
   updatePostSchema,
+  createCommentSchema,
+  updateCommentSchema,
 } from "./validators/index";
 export type {
   CreateTripInput,
@@ -72,6 +77,8 @@ export type {
   CreateChatRoomInput,
   CreatePostInput,
   UpdatePostInput,
+  CreateCommentInput,
+  UpdateCommentInput,
 } from "./validators/index";
 
 export {

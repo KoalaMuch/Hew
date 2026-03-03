@@ -12,6 +12,7 @@ type PostType = 'RUBHEW' | 'HAKHONG' | null;
 
 interface PostData {
   id: string;
+  sessionId: string;
   type: 'RUBHEW' | 'HAKHONG';
   content: string;
   hashtags: string[];
@@ -21,6 +22,7 @@ interface PostData {
   travelDate?: string;
   budget?: number;
   viewCount: number;
+  commentCount?: number;
   createdAt: string;
   session: { displayName: string; avatarSeed: string };
 }

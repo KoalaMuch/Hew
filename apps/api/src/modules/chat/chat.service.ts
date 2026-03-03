@@ -18,7 +18,24 @@ export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createRoom(sessionId: string, data: CreateChatRoomInput) {
-    const participants = [sessionId, data.participantSessionId];
+    const participants = [sessionId, data.participantSessionId].sort();
+    const participantSet = new Set(participants);
+    if (participantSet.size !== 2) {
+      throw new Error("Cannot create room with self");
+    }
+
+    const existing = await this.prisma.chatRoom.findFirst({
+      where: {
+        participants: { hasEvery: participants },
+        ...(data.tripId && { tripId: data.tripId }),
+        ...(data.itemRequestId && { itemRequestId: data.itemRequestId }),
+      },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
     return this.prisma.chatRoom.create({
       data: {
         tripId: data.tripId ?? undefined,

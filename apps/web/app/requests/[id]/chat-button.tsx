@@ -5,11 +5,11 @@ import { useSession } from '@/lib/session-context';
 import { createChatRoom } from '@/lib/api';
 
 interface ChatButtonProps {
-  tripId: string;
+  itemRequestId: string;
   ownerSessionId: string;
 }
 
-export function ChatButton({ tripId, ownerSessionId }: ChatButtonProps) {
+export function ChatButton({ itemRequestId, ownerSessionId }: ChatButtonProps) {
   const router = useRouter();
   const { sessionId, isLoading } = useSession();
 
@@ -19,11 +19,11 @@ export function ChatButton({ tripId, ownerSessionId }: ChatButtonProps) {
     try {
       const room = await createChatRoom({
         participantSessionId: ownerSessionId,
-        tripId,
+        itemRequestId,
       });
       router.push(`/chat/${room.id}`);
     } catch {
-      router.push(`/chat?trip=${tripId}&participant=${ownerSessionId}`);
+      router.push(`/chat?itemRequest=${itemRequestId}&participant=${ownerSessionId}`);
     }
   };
 

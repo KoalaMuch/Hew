@@ -16,6 +16,8 @@ import { ReviewModule } from "./modules/review/review.module";
 import { NotificationModule } from "./modules/notification/notification.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { PostModule } from "./modules/post/post.module";
+import { CommentModule } from "./modules/comment/comment.module";
+import { UsersModule } from "./modules/users/users.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { PrismaModule } from "./common/prisma.module";
 import { HealthController } from "./common/health.controller";
@@ -36,6 +38,8 @@ export const featureModules = [
   NotificationModule,
   AdminModule,
   PostModule,
+  CommentModule,
+  UsersModule,
   AuthModule,
 ];
 

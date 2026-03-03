@@ -105,7 +105,7 @@ export default async function TripDetailPage({ params }: PageProps) {
         )}
 
         <div className="mt-8 flex flex-wrap gap-4">
-          <ChatButton tripId={id} />
+          <ChatButton tripId={id} ownerSessionId={trip.sessionId} />
         </div>
       </div>
 

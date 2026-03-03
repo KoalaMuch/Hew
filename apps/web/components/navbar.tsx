@@ -18,6 +18,7 @@ import {
   User,
 } from 'lucide-react';
 import { useSession } from '@/lib/session-context';
+import { getAvatarInitial } from '@/lib/utils';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -28,6 +29,7 @@ export function Navbar() {
 
   const displayName = session?.displayName || 'ผู้ใช้';
   const avatarSeed = session?.avatarSeed || session?.id || 'anon';
+  const avatarLetter = getAvatarInitial(displayName, avatarSeed);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -115,7 +117,7 @@ export function Navbar() {
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-sm font-bold text-white"
                     title={displayName}
                   >
-                    {avatarSeed.charAt(0).toUpperCase()}
+                    {avatarLetter}
                   </div>
                 </Link>
               )}

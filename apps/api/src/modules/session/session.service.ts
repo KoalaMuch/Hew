@@ -21,6 +21,25 @@ export class SessionService {
     id: string,
     data: { displayName?: string; avatarSeed?: string },
   ) {
+    const session = await this.prisma.session.findUnique({
+      where: { id },
+      select: { registeredUserId: true },
+    });
+
+    if (session?.registeredUserId && data.displayName !== undefined) {
+      await this.prisma.$transaction([
+        this.prisma.session.update({
+          where: { id },
+          data,
+        }),
+        this.prisma.registeredUser.update({
+          where: { id: session.registeredUserId },
+          data: { displayName: data.displayName },
+        }),
+      ]);
+      return this.prisma.session.findUniqueOrThrow({ where: { id } });
+    }
+
     return this.prisma.session.update({
       where: { id },
       data,

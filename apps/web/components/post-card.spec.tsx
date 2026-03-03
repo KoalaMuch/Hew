@@ -10,6 +10,7 @@ vi.mock("next/image", () => ({
 
 const baseProps = {
   id: "post-1",
+  sessionId: "session-1",
   type: "RUBHEW" as const,
   content: "Test post content",
   hashtags: ["#test"],

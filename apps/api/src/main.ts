@@ -41,9 +41,16 @@ async function bootstrap() {
   });
   app.setGlobalPrefix("api");
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.enableShutdownHooks();
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
   logger.info(`API server running on http://localhost:${port}`);
+
+  process.on("SIGTERM", async () => {
+    logger.info("SIGTERM received, starting graceful shutdown...");
+    await app.close();
+    process.exit(0);
+  });
 }
 bootstrap();

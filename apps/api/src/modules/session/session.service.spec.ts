@@ -5,8 +5,13 @@ const mockPrisma = {
   session: {
     create: vi.fn(),
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
     update: vi.fn(),
   },
+  registeredUser: {
+    update: vi.fn(),
+  },
+  $transaction: vi.fn(),
 };
 
 describe("SessionService", () => {
@@ -71,7 +76,10 @@ describe("SessionService", () => {
   });
 
   describe("updateSession", () => {
-    it("updates display name", async () => {
+    it("updates display name for unregistered session", async () => {
+      mockPrisma.session.findUnique.mockResolvedValue({
+        registeredUserId: null,
+      });
       const updated = { id: "session-1", displayName: "NewName" };
       mockPrisma.session.update.mockResolvedValue(updated);
 
@@ -82,6 +90,42 @@ describe("SessionService", () => {
         where: { id: "session-1" },
         data: { displayName: "NewName" },
       });
+      expect(result).toEqual(updated);
+    });
+
+    it("syncs displayName to RegisteredUser when registered", async () => {
+      mockPrisma.session.findUnique.mockResolvedValue({
+        registeredUserId: "user-1",
+      });
+      mockPrisma.$transaction.mockResolvedValue([{}, {}]);
+      const synced = {
+        id: "session-1",
+        displayName: "NewName",
+        registeredUserId: "user-1",
+      };
+      mockPrisma.session.findUniqueOrThrow.mockResolvedValue(synced);
+
+      const result = await service.updateSession("session-1", {
+        displayName: "NewName",
+      });
+
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(result).toEqual(synced);
+    });
+
+    it("updates avatarSeed without syncing to RegisteredUser", async () => {
+      mockPrisma.session.findUnique.mockResolvedValue({
+        registeredUserId: "user-1",
+      });
+      const updated = { id: "session-1", avatarSeed: "newseed" };
+      mockPrisma.session.update.mockResolvedValue(updated);
+
+      const result = await service.updateSession("session-1", {
+        avatarSeed: "newseed",
+      });
+
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+      expect(mockPrisma.session.update).toHaveBeenCalled();
       expect(result).toEqual(updated);
     });
   });

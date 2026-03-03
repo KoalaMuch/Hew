@@ -7,6 +7,8 @@ import {
   shipOrderSchema,
   updateSessionSchema,
   registerSchema,
+  createCommentSchema,
+  updateCommentSchema,
 } from "./index";
 
 describe("Validators", () => {
@@ -148,6 +150,48 @@ describe("Validators", () => {
         displayName: "Test User",
       });
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe("createCommentSchema", () => {
+    it("accepts valid comment", () => {
+      const result = createCommentSchema.safeParse({
+        content: "Great post!",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects empty content", () => {
+      const result = createCommentSchema.safeParse({ content: "" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects content exceeding 2000 chars", () => {
+      const result = createCommentSchema.safeParse({
+        content: "x".repeat(2001),
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("accepts 2000 char content", () => {
+      const result = createCommentSchema.safeParse({
+        content: "x".repeat(2000),
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("updateCommentSchema", () => {
+    it("accepts valid update", () => {
+      const result = updateCommentSchema.safeParse({
+        content: "Updated comment",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects empty content", () => {
+      const result = updateCommentSchema.safeParse({ content: "" });
+      expect(result.success).toBe(false);
     });
   });
 });

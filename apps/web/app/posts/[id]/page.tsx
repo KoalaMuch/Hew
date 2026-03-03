@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getPostById } from '@/lib/api';
+import { CommentsSection } from '@/components/comments-section';
+import { ChatButton } from './chat-button';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -36,6 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 interface PostData {
   id: string;
+  sessionId: string;
   type: 'RUBHEW' | 'HAKHONG';
   content: string;
   hashtags: string[];
@@ -105,13 +108,21 @@ export default async function PostDetailPage({ params }: PageProps) {
       <article className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         {/* Author */}
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-base font-bold text-white">
-            {post.session.avatarSeed?.charAt(0).toUpperCase() || '?'}
-          </div>
+          <Link
+            href={`/users/${post.sessionId}`}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-base font-bold text-white hover:ring-2 hover:ring-primary-300"
+          >
+            {(post.session.displayName && post.session.displayName !== 'Anonymous')
+              ? post.session.displayName.charAt(0).toUpperCase()
+              : (post.session.avatarSeed?.charAt(0).toUpperCase() || '?')}
+          </Link>
           <div>
-            <p className="font-semibold text-gray-900">
+            <Link
+              href={`/users/${post.sessionId}`}
+              className="font-semibold text-gray-900 hover:text-primary-600"
+            >
               {post.session.displayName}
-            </p>
+            </Link>
             <p className="text-xs text-gray-400">
               {new Date(post.createdAt).toLocaleDateString('th-TH', {
                 year: 'numeric',
@@ -122,15 +133,18 @@ export default async function PostDetailPage({ params }: PageProps) {
               })}
             </p>
           </div>
-          <span
-            className={`ml-auto inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
-              isRubhew
-                ? 'bg-blue-50 text-blue-700'
-                : 'bg-amber-50 text-amber-700'
-            }`}
-          >
-            {isRubhew ? 'รับหิ้ว' : 'หาของ'}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <ChatButton postAuthorSessionId={post.sessionId} />
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
+                isRubhew
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'bg-amber-50 text-amber-700'
+              }`}
+            >
+              {isRubhew ? 'รับหิ้ว' : 'หาของ'}
+            </span>
+          </div>
         </div>
 
         {/* Content */}
@@ -201,6 +215,8 @@ export default async function PostDetailPage({ params }: PageProps) {
           เข้าชม {post.viewCount} ครั้ง
         </div>
       </article>
+
+      <CommentsSection postId={post.id} />
     </div>
   );
 }

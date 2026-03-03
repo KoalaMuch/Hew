@@ -80,6 +80,17 @@ export interface PostDto {
   budget?: number | null;
   status: string;
   viewCount: number;
+  commentCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentDto {
+  id: string;
+  postId: string;
+  sessionId: string;
+  session: SessionInfo;
+  content: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -126,4 +137,24 @@ export interface ProfileDto {
     reviewCount: number;
     createdAt: string;
   } | null;
+}
+
+export interface ReviewDto {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  reviewerSession: SessionInfo;
+}
+
+export interface PublicProfileDto {
+  sessionId: string;
+  displayName: string;
+  avatarSeed: string;
+  isRegistered: boolean;
+  memberSince: string;
+  postCount: number;
+  rating: number;
+  reviewCount: number;
+  reviews: ReviewDto[];
 }

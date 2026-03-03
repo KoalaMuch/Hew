@@ -53,6 +53,7 @@ export class PostController {
     @Query("hashtag") hashtag?: string,
     @Query("search") search?: string,
     @Query("country") country?: string,
+    @Query("sessionId") sessionId?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string,
   ) {
@@ -61,6 +62,7 @@ export class PostController {
       hashtag,
       search,
       country,
+      sessionId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : 20,
     });

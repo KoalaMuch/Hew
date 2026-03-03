@@ -116,5 +116,15 @@ export const createPostSchema = z.object({
 
 export const updatePostSchema = createPostSchema.partial().omit({ type: true });
 
+export const createCommentSchema = z.object({
+  content: z.string().min(1).max(2000),
+});
+
+export const updateCommentSchema = z.object({
+  content: z.string().min(1).max(2000),
+});
+
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 export type UpdatePostInput = z.infer<typeof updatePostSchema>;
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+export type UpdateCommentInput = z.infer<typeof updateCommentSchema>;

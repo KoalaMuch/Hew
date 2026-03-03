@@ -47,8 +47,18 @@ docker compose -f docker-compose.prod.yml run --rm api sh -c \
   "cd /app/packages/db && npx prisma migrate deploy" || \
   echo "⚠️  Migration failed or already applied. Continuing..."
 
-echo -e "${YELLOW}🚀 Starting services...${NC}"
-docker compose -f docker-compose.prod.yml up -d
+echo -e "${YELLOW}🚀 Starting services (zero-downtime: update one at a time with health gate)...${NC}"
+# Update services sequentially - each waits for healthcheck before next (Docker Compose v2.20+)
+if docker compose -f docker-compose.prod.yml up -d --no-deps --wait api 2>/dev/null; then
+    docker compose -f docker-compose.prod.yml up -d --no-deps --wait web 2>/dev/null || docker compose -f docker-compose.prod.yml up -d web
+    docker compose -f docker-compose.prod.yml up -d --no-deps --wait worker 2>/dev/null || docker compose -f docker-compose.prod.yml up -d worker
+else
+    # Fallback: standard up -d (older Docker Compose)
+    docker compose -f docker-compose.prod.yml up -d
+fi
+
+# Ensure monitoring stack is running
+docker compose -f docker-compose.prod.yml up -d prometheus loki tempo alloy grafana 2>/dev/null || true
 
 # Record deployment history for rollback reference
 DEPLOYED_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
@@ -56,8 +66,15 @@ echo "$DEPLOYED_SHA" > .deployed-sha
 echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') ${DEPLOYED_SHA} $(git log -1 --format='%s' 2>/dev/null || echo '')" >> .deploy-history
 echo -e "${GREEN}📌 Deployed SHA: ${DEPLOYED_SHA}${NC}"
 
-echo -e "${YELLOW}⏳ Waiting for services to be healthy...${NC}"
-sleep 10
+echo -e "${YELLOW}⏳ Verifying API health...${NC}"
+for i in $(seq 1 10); do
+    if curl -sf http://localhost:3000/api/health >/dev/null 2>&1; then
+        echo -e "${GREEN}API health check passed${NC}"
+        break
+    fi
+    echo "Attempt $i: waiting for API..."
+    sleep 3
+done
 
 # Check if services are running
 if docker compose -f docker-compose.prod.yml ps | grep -q "Up"; then

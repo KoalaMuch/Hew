@@ -57,15 +57,17 @@ export class PostService {
     hashtag?: string;
     search?: string;
     country?: string;
+    sessionId?: string;
     page?: number;
     limit?: number;
   }) {
-    const { type, hashtag, search, country, page = 1, limit = 20 } = filters;
+    const { type, hashtag, search, country, sessionId, page = 1, limit = 20 } = filters;
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = { status: "ACTIVE" as PostStatus };
     if (type) where.type = type;
     if (country) where.country = country;
+    if (sessionId) where.sessionId = sessionId;
     if (hashtag) where.hashtags = { has: hashtag.toLowerCase() };
     if (search) {
       where.OR = [

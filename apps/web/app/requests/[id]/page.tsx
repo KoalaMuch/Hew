@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { getItemRequestById, getOffers } from '@/lib/api';
 import { OfferCard } from '@/components/offer-card';
 import { OfferForm } from './offer-form';
+import { ChatButton } from './chat-button';
 import type { ItemRequestDto, OfferDto } from '@hew/shared';
 
 interface PageProps {
@@ -123,6 +124,10 @@ export default async function RequestDetailPage({ params }: PageProps) {
               </p>
             </div>
           )}
+
+          <div className="mt-8 flex flex-wrap gap-4">
+            <ChatButton itemRequestId={id} ownerSessionId={request.sessionId} />
+          </div>
 
           <div className="mt-8">
             <h2 className="mb-4 text-lg font-semibold text-gray-900">
