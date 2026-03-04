@@ -67,28 +67,6 @@ export default function ChatRoomPage() {
   useEffect(() => {
     if (!roomId || !sessionId) return;
 
-    const loadMessages = async () => {
-      try {
-        const data = await getChatMessages(roomId, { limit: 100 });
-        setMessages(data as Message[]);
-        // Mark messages as read after loading (backend also does this, but this ensures it happens)
-        await markChatRoomAsRead(roomId).catch(() => {
-          // Ignore errors, backend handles it
-        });
-        refreshUnreadCount();
-      } catch {
-        setMessages([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadMessages();
-  }, [roomId, sessionId, refreshUnreadCount]);
-
-  useEffect(() => {
-    if (!roomId || !sessionId) return;
-
     const token = sessionId;
     setSessionToken(token);
 
@@ -103,23 +81,21 @@ export default function ChatRoomPage() {
       try {
         const data = await getChatMessages(roomId, { limit: 100 });
         setMessages((prev) => {
-          // Deduplicate: merge new messages with existing ones by id
           const existingIds = new Set(prev.map((m) => m.id));
           const newMessages = (data as Message[]).filter((m) => !existingIds.has(m.id));
-          // Combine and sort by createdAt
+          if (prev.length === 0) return data as Message[];
           const combined = [...prev, ...newMessages].sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
           );
           return combined;
         });
-        await markChatRoomAsRead(roomId).catch(() => {
-          // Ignore errors
-        });
+        await markChatRoomAsRead(roomId).catch(() => {});
         refreshUnreadCount();
       } catch {
         // Keep existing messages on error
       } finally {
         isLoadingMessages = false;
+        setLoading(false);
       }
     };
 
@@ -132,14 +108,12 @@ export default function ChatRoomPage() {
     socketInstance.on('connect', () => {
       setConnected(true);
       socketInstance.emit('join_room', { roomId });
-      // Reload messages on connect to catch any missed messages
       loadMessages();
     });
 
     socketInstance.on('reconnect', () => {
       setConnected(true);
       socketInstance.emit('join_room', { roomId });
-      // Reload messages on reconnect
       loadMessages();
     });
 
@@ -149,30 +123,20 @@ export default function ChatRoomPage() {
 
     socketInstance.on('message', async (msg: Message) => {
       setMessages((prev) => {
-        // Deduplicate by message id
-        if (prev.some((m) => m.id === msg.id)) {
-          return prev;
-        }
+        if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
-      // Mark as read if message is from other user and user is viewing the chat
       if (msg.senderId !== sessionId) {
-        await markChatRoomAsRead(roomId).catch(() => {
-          // Ignore errors
-        });
+        await markChatRoomAsRead(roomId).catch(() => {});
         refreshUnreadCount();
       }
     });
 
     setSocket(socketInstance);
 
-    // Handle page visibility change
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // User returned to the tab, reload messages if socket is connected
-        if (socketInstance.connected) {
-          loadMessages();
-        }
+      if (document.visibilityState === 'visible' && socketInstance.connected) {
+        loadMessages();
       }
     };
 
