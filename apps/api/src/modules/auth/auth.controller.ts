@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Post,
   Query,
@@ -37,6 +38,8 @@ const VALID_PROVIDERS = new Set<OAuthProvider>([
 
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly oauthService: OAuthService,
@@ -149,7 +152,11 @@ export class AuthController {
       });
 
       res.redirect(`${frontendUrl}/auth/callback?success=true`);
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `OAuth ${provider} callback failed: ${err instanceof Error ? err.message : err}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       res.redirect(`${frontendUrl}/auth/callback?error=auth_failed`);
     }
   }

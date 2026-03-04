@@ -1,10 +1,12 @@
 import * as crypto from "crypto";
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { OAuthProvider, OAuthProfile } from "./oauth.types";
 
 @Injectable()
 export class OAuthService {
+  private readonly logger = new Logger(OAuthService.name);
+
   constructor(private readonly config: ConfigService) {}
 
   getAuthorizationUrl(provider: OAuthProvider, sessionId: string): string {
@@ -93,9 +95,14 @@ export class OAuthService {
     const tokenData = (await tokenRes.json()) as {
       access_token?: string;
       error?: string;
+      error_description?: string;
     };
-    if (!tokenData.access_token)
+    if (!tokenData.access_token) {
+      this.logger.error(
+        `Google token exchange failed: ${tokenData.error} - ${tokenData.error_description}`,
+      );
       throw new BadRequestException("Google auth failed");
+    }
 
     const userRes = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
