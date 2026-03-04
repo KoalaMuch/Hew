@@ -58,29 +58,7 @@ export class AuthService {
       throw new UnauthorizedException("Invalid email or password");
     }
 
-    const existingSession = await this.prisma.session.findFirst({
-      where: { registeredUserId: user.id },
-    });
-
-    if (existingSession && existingSession.id !== sessionId) {
-      await this.prisma.session.update({
-        where: { id: existingSession.id },
-        data: { registeredUserId: null },
-      });
-    }
-
-    const userWithAvatar = await this.prisma.registeredUser.findUnique({
-      where: { id: user.id },
-      select: { avatarUrl: true },
-    });
-    await this.prisma.session.update({
-      where: { id: sessionId },
-      data: {
-        registeredUserId: user.id,
-        displayName: user.displayName,
-        avatarUrl: userWithAvatar?.avatarUrl ?? undefined,
-      },
-    });
+    await this.linkSessionToUser(sessionId, user);
 
     return {
       id: user.id,
@@ -178,6 +156,20 @@ export class AuthService {
       }
     }
 
+    await this.linkSessionToUser(sessionId, user);
+
+    return { id: user.id, displayName: user.displayName };
+  }
+
+  /**
+   * Disconnect any existing session linked to this user, then link the
+   * given session. Shared by login() and loginWithOAuth() to guarantee
+   * the unique constraint on registeredUserId is never violated.
+   */
+  private async linkSessionToUser(
+    sessionId: string,
+    user: { id: string; displayName: string },
+  ) {
     const existingSession = await this.prisma.session.findFirst({
       where: { registeredUserId: user.id },
     });
@@ -200,8 +192,6 @@ export class AuthService {
         avatarUrl: userWithAvatar?.avatarUrl ?? undefined,
       },
     });
-
-    return { id: user.id, displayName: user.displayName };
   }
 
   async logout(sessionId: string) {
