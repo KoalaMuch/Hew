@@ -9,14 +9,16 @@ import { useSession } from '@/lib/session-context';
 import { Avatar } from '@/components/avatar';
 import type { ChatRoomDto } from '@hew/shared';
 
-interface ChatRoomWithMessages extends ChatRoomDto {
+interface ChatRoomWithMessages extends Omit<ChatRoomDto, 'messages'> {
   updatedAt: string;
   messages?: Array<{
     id: string;
+    roomId: string;
+    senderId: string;
     content: string;
     type: string;
     createdAt: string;
-    sender?: { displayName: string; avatarSeed: string; avatarUrl?: string | null };
+    sender?: { id: string; displayName: string; avatarSeed: string; avatarUrl?: string | null };
   }>;
 }
 

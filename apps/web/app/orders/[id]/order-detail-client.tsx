@@ -73,8 +73,8 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
       {showPaymentModal && order && (
         <PaymentModal
           orderId={order.id}
-          orderName={order.orderName}
-          orderImageUrl={order.orderImageUrl}
+          orderName={order.orderName ?? null}
+          orderImageUrl={order.orderImageUrl ?? null}
           totalAmount={totalAmount}
           onClose={() => setShowPaymentModal(false)}
           onSuccess={() => {
