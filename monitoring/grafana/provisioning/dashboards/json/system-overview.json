@@ -13,7 +13,7 @@
       "title": "CPU Usage by Container",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{job=\"integrations/docker\", name=~\".+\"}[5m])) * 100",
@@ -33,7 +33,7 @@
       "title": "Memory Usage by Container",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "container_memory_usage_bytes{job=\"integrations/docker\", name=~\".+\"}",
@@ -53,7 +53,7 @@
       "title": "Container Status",
       "type": "table",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "container_last_seen{job=\"integrations/docker\", name=~\".+\"} - time()",
@@ -102,7 +102,7 @@
       "title": "Network Received (bytes/s)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum by (name) (rate(container_network_receive_bytes_total{job=\"integrations/docker\", name=~\".+\"}[5m]))",
@@ -122,7 +122,7 @@
       "title": "Network Transmitted (bytes/s)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum by (name) (rate(container_network_transmit_bytes_total{job=\"integrations/docker\", name=~\".+\"}[5m]))",
@@ -142,7 +142,7 @@
       "title": "PostgreSQL Active Connections",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "pg_stat_activity_count{job=\"integrations/postgres\"}",
@@ -162,7 +162,7 @@
       "title": "PostgreSQL Database Size",
       "type": "stat",
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "pg_database_size_bytes{job=\"integrations/postgres\", datname!~\"template.*\"}",
@@ -179,7 +179,7 @@
       "title": "PostgreSQL Transactions / sec",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum(rate(pg_stat_database_xact_commit{job=\"integrations/postgres\"}[5m]))",
@@ -203,7 +203,7 @@
       "title": "Disk Read/Write (bytes/s)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum by (name) (rate(container_fs_reads_bytes_total{job=\"integrations/docker\", name=~\".+\"}[5m]))",
@@ -227,7 +227,7 @@
       "title": "Container Restart Count",
       "type": "stat",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "changes(container_last_seen{job=\"integrations/docker\", name=~\".+\"}[24h])",

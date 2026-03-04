@@ -13,7 +13,7 @@
       "title": "OAuth Callback Success Rate",
       "type": "stat",
       "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"3..\"}[1h])) / sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[1h])) * 100",
@@ -40,7 +40,7 @@
       "title": "OAuth Callbacks (total/1h)",
       "type": "stat",
       "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[1h]))",
@@ -58,7 +58,7 @@
       "title": "OAuth Redirects (total/1h)",
       "type": "stat",
       "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/redirect\"}[1h]))",
@@ -76,7 +76,7 @@
       "title": "OAuth Callback Errors (total/1h)",
       "type": "stat",
       "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"4..|5..\"}[1h]))",
@@ -102,7 +102,7 @@
       "title": "OAuth Callback Rate (Success vs Error)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"3..\"}[5m]))",
@@ -126,7 +126,7 @@
       "title": "OAuth Callback Response Time (p95)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[5m])))",
@@ -150,7 +150,7 @@
       "title": "OAuth Callback Status Code Distribution",
       "type": "piechart",
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
           "expr": "sum by (http_response_status_code) (increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[24h]))",
@@ -164,7 +164,7 @@
       "title": "Recent OAuth Error Logs",
       "type": "logs",
       "gridPos": { "h": 12, "w": 16, "x": 8, "y": 13 },
-      "datasource": { "type": "loki", "uid": "loki" },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "targets": [
         {
           "expr": "{container=~\".*api.*\"} |~ \"(?i)(oauth|google|line|facebook|apple|auth.*(fail|error))\"",
@@ -186,7 +186,7 @@
       "description": "Click a trace ID to view full span details in Tempo",
       "type": "table",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 25 },
-      "datasource": { "type": "tempo", "uid": "tempo" },
+      "datasource": { "type": "tempo", "uid": "P214B5B846CF3925F" },
       "targets": [
         {
           "queryType": "traceqlSearch",
