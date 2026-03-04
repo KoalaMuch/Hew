@@ -51,4 +51,18 @@ export class ChatController {
     const data = createChatRoomSchema.parse(body);
     return this.chatService.createRoom(sessionId, data);
   }
+
+  @Get("unread-count")
+  @UseGuards(SessionGuard)
+  async getUnreadCount(@SessionId() sessionId: string) {
+    const count = await this.chatService.getUnreadCount(sessionId);
+    return { count };
+  }
+
+  @Post("rooms/:id/mark-read")
+  @UseGuards(SessionGuard)
+  async markRoomAsRead(@Param("id") roomId: string, @SessionId() sessionId: string) {
+    await this.chatService.markAsRead(roomId, sessionId);
+    return { success: true };
+  }
 }

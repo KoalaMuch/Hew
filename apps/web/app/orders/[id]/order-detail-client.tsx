@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getOrderById, cancelOrder } from '@/lib/api';
 import { OrderStatus } from '@/components/order-status';
+import { PaymentModal } from '@/components/payment-modal';
+import { useSession } from '@/lib/session-context';
 import type { OrderDto } from '@hew/shared';
 
 const CANCELLABLE_STATUSES = ['CREATED', 'ESCROW_PENDING'];
@@ -15,9 +17,11 @@ interface OrderDetailClientProps {
 
 export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
   const router = useRouter();
+  const { sessionId } = useSession();
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const refreshOrder = () => {
     getOrderById(orderId)
@@ -61,10 +65,26 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
   const totalAmount = order.totalAmount ? Number(order.totalAmount) : 0;
   const isChatOrder = !!order.orderName || !!order.roomId;
   const canCancel = CANCELLABLE_STATUSES.includes(status);
+  const isBuyer = order.buyerSessionId === sessionId;
+  const canPay = status === 'ESCROW_PENDING' && isBuyer;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="mb-8">
+    <>
+      {showPaymentModal && order && (
+        <PaymentModal
+          orderId={order.id}
+          orderName={order.orderName}
+          orderImageUrl={order.orderImageUrl}
+          totalAmount={totalAmount}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={() => {
+            setShowPaymentModal(false);
+            refreshOrder();
+          }}
+        />
+      )}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
           {isChatOrder && order.orderName
             ? order.orderName
@@ -101,6 +121,18 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
         <OrderStatus status={status} />
       </div>
 
+      {canPay && (
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={() => setShowPaymentModal(true)}
+            className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700"
+          >
+            ชำระเงิน
+          </button>
+        </div>
+      )}
+
       {canCancel && (
         <div className="mt-8 flex gap-3">
           <button
@@ -121,6 +153,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

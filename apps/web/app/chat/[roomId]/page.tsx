@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 import { ArrowLeft, Package, Send } from 'lucide-react';
-import { getChatMessages } from '@/lib/api';
+import { getChatMessages, markChatRoomAsRead } from '@/lib/api';
 import { useSession } from '@/lib/session-context';
 import { Avatar } from '@/components/avatar';
 import { OrderCard } from '@/components/order-card';
 import { CreateOrderModal } from '@/components/create-order-modal';
+import { PaymentModal } from '@/components/payment-modal';
 import { setSessionToken } from '@/lib/api';
+import { useUnreadCount } from '@/hooks/use-unread-count';
 
 function getSocketUrl(): string {
   if (typeof window === 'undefined') return '';
@@ -34,6 +36,7 @@ export default function ChatRoomPage() {
   const params = useParams();
   const roomId = params?.roomId as string;
   const { sessionId } = useSession();
+  const { refresh: refreshUnreadCount } = useUnreadCount();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
@@ -41,6 +44,13 @@ export default function ChatRoomPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
   const [showCreateOrder, setShowCreateOrder] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<{
+    orderId: string;
+    orderName: string | null;
+    orderImageUrl: string | null;
+    totalAmount: number;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -61,6 +71,11 @@ export default function ChatRoomPage() {
       try {
         const data = await getChatMessages(roomId, { limit: 100 });
         setMessages(data as Message[]);
+        // Mark messages as read after loading (backend also does this, but this ensures it happens)
+        await markChatRoomAsRead(roomId).catch(() => {
+          // Ignore errors, backend handles it
+        });
+        refreshUnreadCount();
       } catch {
         setMessages([]);
       } finally {
@@ -69,7 +84,7 @@ export default function ChatRoomPage() {
     };
 
     loadMessages();
-  }, [roomId, sessionId]);
+  }, [roomId, sessionId, refreshUnreadCount]);
 
   useEffect(() => {
     if (!roomId || !sessionId) return;
@@ -80,6 +95,34 @@ export default function ChatRoomPage() {
     const url = getSocketUrl();
     if (!url) return;
 
+    let isLoadingMessages = false;
+
+    const loadMessages = async () => {
+      if (isLoadingMessages) return;
+      isLoadingMessages = true;
+      try {
+        const data = await getChatMessages(roomId, { limit: 100 });
+        setMessages((prev) => {
+          // Deduplicate: merge new messages with existing ones by id
+          const existingIds = new Set(prev.map((m) => m.id));
+          const newMessages = (data as Message[]).filter((m) => !existingIds.has(m.id));
+          // Combine and sort by createdAt
+          const combined = [...prev, ...newMessages].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+          return combined;
+        });
+        await markChatRoomAsRead(roomId).catch(() => {
+          // Ignore errors
+        });
+        refreshUnreadCount();
+      } catch {
+        // Keep existing messages on error
+      } finally {
+        isLoadingMessages = false;
+      }
+    };
+
     const socketInstance = io(`${url}/chat`, {
       path: '/socket.io',
       auth: { token },
@@ -89,23 +132,58 @@ export default function ChatRoomPage() {
     socketInstance.on('connect', () => {
       setConnected(true);
       socketInstance.emit('join_room', { roomId });
+      // Reload messages on connect to catch any missed messages
+      loadMessages();
+    });
+
+    socketInstance.on('reconnect', () => {
+      setConnected(true);
+      socketInstance.emit('join_room', { roomId });
+      // Reload messages on reconnect
+      loadMessages();
     });
 
     socketInstance.on('disconnect', () => {
       setConnected(false);
     });
 
-    socketInstance.on('message', (msg: Message) => {
-      setMessages((prev) => [...prev, msg]);
+    socketInstance.on('message', async (msg: Message) => {
+      setMessages((prev) => {
+        // Deduplicate by message id
+        if (prev.some((m) => m.id === msg.id)) {
+          return prev;
+        }
+        return [...prev, msg];
+      });
+      // Mark as read if message is from other user and user is viewing the chat
+      if (msg.senderId !== sessionId) {
+        await markChatRoomAsRead(roomId).catch(() => {
+          // Ignore errors
+        });
+        refreshUnreadCount();
+      }
     });
 
     setSocket(socketInstance);
 
+    // Handle page visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // User returned to the tab, reload messages if socket is connected
+        if (socketInstance.connected) {
+          loadMessages();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       socketInstance.disconnect();
       setSocket(null);
     };
-  }, [roomId, sessionId]);
+  }, [roomId, sessionId, refreshUnreadCount]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,22 +218,48 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-8rem)] flex-col px-4 pb-24 pt-6 md:pb-8">
+    <div className="fixed inset-0 top-14 bottom-14 flex flex-col md:relative md:top-auto md:bottom-auto md:h-[calc(100dvh-8rem)] md:px-4 md:pb-8 md:pt-6">
       {showCreateOrder && (
         <CreateOrderModal
           roomId={roomId}
           onClose={() => setShowCreateOrder(false)}
-          onSuccess={() => setShowCreateOrder(false)}
+          onSuccess={() => {
+            setShowCreateOrder(false);
+            // Reload messages to show the new order card
+            getChatMessages(roomId, { limit: 100 })
+              .then((data) => setMessages(data as Message[]))
+              .catch(() => {});
+          }}
         />
       )}
-      <div className="mb-4 flex items-center justify-between gap-4">
+      {showPaymentModal && selectedOrder && (
+        <PaymentModal
+          orderId={selectedOrder.orderId}
+          orderName={selectedOrder.orderName}
+          orderImageUrl={selectedOrder.orderImageUrl}
+          totalAmount={selectedOrder.totalAmount}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedOrder(null);
+          }}
+          onSuccess={() => {
+            setShowPaymentModal(false);
+            setSelectedOrder(null);
+            // Reload messages to show updated order status
+            getChatMessages(roomId, { limit: 100 })
+              .then((data) => setMessages(data as Message[]))
+              .catch(() => {});
+          }}
+        />
+      )}
+      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 bg-white px-4 py-3 md:mb-4 md:border-0 md:px-0">
         <div className="flex items-center gap-4">
           <Link
             href="/chat"
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
           >
             <ArrowLeft size={18} />
-            กลับ
+            <span className="hidden md:inline">กลับ</span>
           </Link>
           <h1 className="text-lg font-semibold text-gray-900">แชท</h1>
           {!connected && (
@@ -169,12 +273,12 @@ export default function ChatRoomPage() {
             className="flex items-center gap-1.5 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-100"
           >
             <Package size={18} />
-            สร้างออเดอร์
+            <span className="hidden md:inline">สร้างออเดอร์</span>
           </button>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm md:mx-4">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
@@ -197,9 +301,11 @@ export default function ChatRoomPage() {
                         orderImageUrl: string | null;
                         totalAmount: number;
                         status: string;
+                        buyerSessionId?: string;
                         trackingNumber?: string | null;
                         carrier?: string | null;
                       };
+                      const isBuyer = data.buyerSessionId === sessionId;
                       return (
                         <div
                           key={msg.id}
@@ -218,7 +324,20 @@ export default function ChatRoomPage() {
                                 {msg.sender?.displayName || 'Anonymous'}
                               </p>
                             )}
-                            <OrderCard data={data} isOwn={isOwn} />
+                            <OrderCard
+                              data={data}
+                              isOwn={isOwn}
+                              isBuyer={isBuyer}
+                              onPay={() => {
+                                setSelectedOrder({
+                                  orderId: data.orderId,
+                                  orderName: data.orderName,
+                                  orderImageUrl: data.orderImageUrl,
+                                  totalAmount: data.totalAmount,
+                                });
+                                setShowPaymentModal(true);
+                              }}
+                            />
                             <p
                               className={`mt-1 text-xs ${
                                 isOwn ? 'text-primary-100' : 'text-gray-400'
@@ -285,7 +404,7 @@ export default function ChatRoomPage() {
 
         <form
           onSubmit={handleSend}
-          className="flex gap-2 border-t border-gray-100 p-4"
+          className="flex shrink-0 gap-2 border-t border-gray-100 bg-white p-4"
         >
           <textarea
             ref={inputRef}

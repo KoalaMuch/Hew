@@ -19,10 +19,12 @@ import {
 } from 'lucide-react';
 import { useSession } from '@/lib/session-context';
 import { Avatar } from '@/components/avatar';
+import { useUnreadCount } from '@/hooks/use-unread-count';
 
 export function Navbar() {
   const pathname = usePathname();
   const { session, isLoading } = useSession();
+  const { count: unreadCount } = useUnreadCount();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
   const ordersRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export function Navbar() {
             <div className="hidden items-center gap-1 md:flex">
               <NavLink href="/" icon={<Home size={18} />} label="หน้าแรก" active={isActive('/')} />
               <NavLink href="/my-posts" icon={<FileText size={18} />} label="โพสต์ของฉัน" active={isActive('/my-posts')} />
-              <NavLink href="/chat" icon={<MessageCircle size={18} />} label="แชท" active={isActive('/chat')} />
+              <NavLink href="/chat" icon={<MessageCircle size={18} />} label="แชท" active={isActive('/chat')} badge={unreadCount > 0 ? unreadCount : undefined} />
 
               {/* Orders dropdown */}
               <div ref={ordersRef} className="relative">
@@ -140,7 +142,7 @@ export function Navbar() {
               <div className="flex flex-col gap-1">
                 <MobileNavLink href="/" icon={<Home size={18} />} label="หน้าแรก" active={isActive('/')} onClick={() => setMobileOpen(false)} />
                 <MobileNavLink href="/my-posts" icon={<FileText size={18} />} label="โพสต์ของฉัน" active={isActive('/my-posts')} onClick={() => setMobileOpen(false)} />
-                <MobileNavLink href="/chat" icon={<MessageCircle size={18} />} label="แชท" active={isActive('/chat')} onClick={() => setMobileOpen(false)} />
+                <MobileNavLink href="/chat" icon={<MessageCircle size={18} />} label="แชท" active={isActive('/chat')} onClick={() => setMobileOpen(false)} badge={unreadCount > 0 ? unreadCount : undefined} />
                 <MobileNavLink href="/orders?role=traveler" icon={<Plane size={18} />} label="ที่ต้องหิ้ว" active={false} onClick={() => setMobileOpen(false)} />
                 <MobileNavLink href="/orders?role=buyer" icon={<ShoppingBag size={18} />} label="ที่ต้องได้รับ" active={false} onClick={() => setMobileOpen(false)} />
                 <MobileNavLink href="/profile" icon={<User size={18} />} label="โปรไฟล์" active={isActive('/profile')} onClick={() => setMobileOpen(false)} />
@@ -161,7 +163,7 @@ export function Navbar() {
           >
             <Plus size={24} />
           </Link>
-          <BottomNavLink href="/chat" icon={<MessageCircle size={20} />} label="แชท" active={isActive('/chat')} />
+          <BottomNavLink href="/chat" icon={<MessageCircle size={20} />} label="แชท" active={isActive('/chat')} badge={unreadCount > 0 ? unreadCount : undefined} />
           <BottomNavLink href="/profile" icon={<User size={20} />} label="โปรไฟล์" active={isActive('/profile')} />
         </div>
       </nav>
@@ -169,11 +171,11 @@ export function Navbar() {
   );
 }
 
-function NavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
+function NavLink({ href, icon, label, active, badge }: { href: string; icon: React.ReactNode; label: string; active: boolean; badge?: number }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+      className={`relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
         active
           ? 'bg-primary-50 text-primary-600'
           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -181,35 +183,50 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
     >
       {icon}
       {label}
+      {badge !== undefined && badge > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   );
 }
 
-function MobileNavLink({ href, icon, label, active, onClick }: { href: string; icon: React.ReactNode; label: string; active: boolean; onClick: () => void }) {
+function MobileNavLink({ href, icon, label, active, onClick, badge }: { href: string; icon: React.ReactNode; label: string; active: boolean; onClick: () => void; badge?: number }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium ${
+      className={`relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium ${
         active ? 'bg-primary-50 text-primary-600' : 'text-gray-600 hover:bg-gray-50'
       }`}
     >
       {icon}
       {label}
+      {badge !== undefined && badge > 0 && (
+        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   );
 }
 
-function BottomNavLink({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
+function BottomNavLink({ href, icon, label, active, badge }: { href: string; icon: React.ReactNode; label: string; active: boolean; badge?: number }) {
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium ${
+      className={`relative flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium ${
         active ? 'text-primary-600' : 'text-gray-400'
       }`}
     >
       {icon}
       {label}
+      {badge !== undefined && badge > 0 && (
+        <span className="absolute right-1 top-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold text-white">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   );
 }

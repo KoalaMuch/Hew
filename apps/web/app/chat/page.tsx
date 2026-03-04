@@ -6,17 +6,17 @@ import { useSearchParams } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { getChatRooms, createChatRoom } from '@/lib/api';
 import { useSession } from '@/lib/session-context';
+import { Avatar } from '@/components/avatar';
+import type { ChatRoomDto } from '@hew/shared';
 
-interface ChatRoomWithMessages {
-  id: string;
-  participants: string[];
-  createdAt: string;
+interface ChatRoomWithMessages extends ChatRoomDto {
   updatedAt: string;
   messages?: Array<{
     id: string;
     content: string;
+    type: string;
     createdAt: string;
-    sender?: { displayName: string };
+    sender?: { displayName: string; avatarSeed: string; avatarUrl?: string | null };
   }>;
 }
 
@@ -58,6 +58,45 @@ export default function ChatPage() {
     return msgs[0];
   };
 
+  const getOtherParticipant = (room: ChatRoomWithMessages) => {
+    if (!sessionId || !room.participantSessions) return null;
+    return room.participantSessions.find((p) => p.id !== sessionId);
+  };
+
+  const formatMessagePreview = (room: ChatRoomWithMessages) => {
+    const last = lastMessage(room);
+    if (!last) {
+      return formatRelativeTime(room.updatedAt);
+    }
+
+    if (last.type === 'ORDER_CARD') {
+      return 'ส่งออเดอร์';
+    }
+
+    const senderName = last.sender?.displayName || 'Anonymous';
+    const isOwn = last.sender?.id === sessionId;
+    const prefix = isOwn ? 'คุณ: ' : `${senderName}: `;
+    const content = last.content || '';
+    const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
+    return prefix + preview;
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'เมื่อสักครู่';
+    if (diffMins < 60) return `${diffMins} นาทีที่แล้ว`;
+    if (diffHours < 24) return `${diffHours} ชั่วโมงที่แล้ว`;
+    if (diffDays === 1) return 'เมื่อวาน';
+    if (diffDays < 7) return `${diffDays} วันที่แล้ว`;
+    return date.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
+  };
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-6 md:pb-8">
       <h1 className="text-xl font-bold text-gray-900">แชท</h1>
@@ -79,24 +118,31 @@ export default function ChatPage() {
         ) : rooms.length > 0 ? (
           <div className="space-y-2">
             {rooms.map((room) => {
-              const last = lastMessage(room);
+              const otherParticipant = getOtherParticipant(room);
+              const displayName = otherParticipant?.displayName || 'Anonymous';
+              const avatarSeed = otherParticipant?.avatarSeed || 'anon';
+              const avatarUrl = otherParticipant?.avatarUrl;
+              const preview = formatMessagePreview(room);
+
               return (
                 <Link
                   key={room.id}
                   href={`/chat/${room.id}`}
                   className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-primary-200 hover:bg-gray-50"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100">
-                    <MessageCircle size={20} className="text-primary-600" />
-                  </div>
+                  <Avatar
+                    src={avatarUrl}
+                    displayName={displayName}
+                    avatarSeed={avatarSeed}
+                    size="md"
+                    className="shrink-0"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-gray-900">
-                      ห้องแชท
+                      {displayName}
                     </p>
                     <p className="truncate text-xs text-gray-400">
-                      {last
-                        ? last.content || new Date(room.updatedAt).toLocaleDateString('th-TH')
-                        : new Date(room.updatedAt).toLocaleDateString('th-TH')}
+                      {preview}
                     </p>
                   </div>
                 </Link>

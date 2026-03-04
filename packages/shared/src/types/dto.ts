@@ -105,6 +105,7 @@ export interface ChatRoomDto {
   itemRequestId?: string | null;
   offerId?: string | null;
   participants: string[];
+  participantSessions?: SessionInfo[];
   createdAt: string;
   messages?: ChatMessageDto[];
 }

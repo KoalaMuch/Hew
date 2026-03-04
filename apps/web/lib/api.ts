@@ -247,6 +247,16 @@ export async function createChatRoom(data: {
   });
 }
 
+export async function getUnreadCount() {
+  return fetchApi<{ count: number }>('/chat/unread-count');
+}
+
+export async function markChatRoomAsRead(roomId: string) {
+  return fetchApi<{ success: boolean }>(`/chat/rooms/${roomId}/mark-read`, {
+    method: 'POST',
+  });
+}
+
 // Posts
 export async function getPosts(params?: {
   type?: string;

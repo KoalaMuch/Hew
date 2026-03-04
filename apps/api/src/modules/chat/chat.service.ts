@@ -46,7 +46,7 @@ export class ChatService {
   }
 
   async getRooms(sessionId: string) {
-    return this.prisma.chatRoom.findMany({
+    const rooms = await this.prisma.chatRoom.findMany({
       where: {
         participants: { has: sessionId },
       },
@@ -54,10 +54,40 @@ export class ChatService {
         messages: {
           take: 1,
           orderBy: { createdAt: "desc" },
+          include: {
+            sender: {
+              select: { id: true, displayName: true, avatarSeed: true, avatarUrl: true },
+            },
+          },
         },
       },
       orderBy: { updatedAt: "desc" },
     });
+
+    // Get all unique participant IDs
+    const allParticipantIds = new Set<string>();
+    rooms.forEach((room) => {
+      room.participants.forEach((id) => allParticipantIds.add(id));
+    });
+
+    // Fetch participant session info
+    const participantSessions = await this.prisma.session.findMany({
+      where: { id: { in: Array.from(allParticipantIds) } },
+      select: { id: true, displayName: true, avatarSeed: true, avatarUrl: true },
+    });
+
+    // Create a map for quick lookup
+    const sessionMap = new Map(
+      participantSessions.map((s) => [s.id, s]),
+    );
+
+    // Attach participant sessions to each room
+    return rooms.map((room) => ({
+      ...room,
+      participantSessions: room.participants
+        .map((id) => sessionMap.get(id))
+        .filter((s): s is NonNullable<typeof s> => s !== undefined),
+    }));
   }
 
   async getMessages(
@@ -97,6 +127,9 @@ export class ChatService {
         },
       },
     });
+
+    // Mark messages as read when user views them
+    await this.markAsRead(roomId, sessionId);
 
     return messages.reverse();
   }
@@ -143,6 +176,7 @@ export class ChatService {
       orderImageUrl: string | null;
       totalAmount: { toString(): string };
       status: string;
+      buyerSessionId: string;
       shipment?: { trackingNumber: string | null; carrier: string | null } | null;
     },
   ) {
@@ -164,6 +198,7 @@ export class ChatService {
       orderImageUrl: order.orderImageUrl,
       totalAmount: Number(order.totalAmount),
       status: order.status,
+      buyerSessionId: order.buyerSessionId,
       trackingNumber: order.shipment?.trackingNumber ?? null,
       carrier: order.shipment?.carrier ?? null,
     });
@@ -181,5 +216,56 @@ export class ChatService {
         },
       },
     });
+  }
+
+  async markAsRead(roomId: string, sessionId: string) {
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+    });
+
+    if (!room) {
+      throw new NotFoundException("Room not found");
+    }
+
+    if (!room.participants.includes(sessionId)) {
+      throw new ForbiddenException("You are not a participant of this room");
+    }
+
+    // Mark all unread messages from other participants as read
+    await this.prisma.chatMessage.updateMany({
+      where: {
+        roomId,
+        senderId: { not: sessionId },
+        readAt: null,
+      },
+      data: {
+        readAt: new Date(),
+      },
+    });
+  }
+
+  async getUnreadCount(sessionId: string): Promise<number> {
+    // Get all rooms where user is a participant
+    const rooms = await this.prisma.chatRoom.findMany({
+      where: {
+        participants: { has: sessionId },
+      },
+      select: { id: true },
+    });
+
+    if (rooms.length === 0) {
+      return 0;
+    }
+
+    // Count unread messages (messages from others that haven't been read)
+    const count = await this.prisma.chatMessage.count({
+      where: {
+        roomId: { in: rooms.map((r) => r.id) },
+        senderId: { not: sessionId },
+        readAt: null,
+      },
+    });
+
+    return count;
   }
 }

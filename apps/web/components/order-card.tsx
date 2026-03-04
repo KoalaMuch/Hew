@@ -30,62 +30,83 @@ interface OrderCardData {
 interface OrderCardProps {
   data: OrderCardData;
   isOwn: boolean;
-  sessionId?: string | null;
+  isBuyer?: boolean;
+  onPay?: () => void;
 }
 
-export function OrderCard({ data, isOwn }: OrderCardProps) {
+export function OrderCard({ data, isOwn, isBuyer, onPay }: OrderCardProps) {
   const statusLabel = STATUS_LABELS[data.status] ?? data.status;
+  const canPay = data.status === 'ESCROW_PENDING' && isBuyer && onPay;
 
   return (
-    <Link
-      href={`/orders/${data.orderId}`}
+    <div
       className={`block overflow-hidden rounded-2xl border transition-colors ${
         isOwn
           ? 'border-primary-200 bg-primary-50'
-          : 'border-gray-200 bg-white hover:border-gray-300'
+          : 'border-gray-200 bg-white'
       }`}
     >
-      <div className="flex gap-3 p-3">
-        {data.orderImageUrl ? (
-          <img
-            src={data.orderImageUrl}
-            alt={data.orderName || 'Order'}
-            className="h-16 w-16 shrink-0 rounded-xl object-cover"
-          />
-        ) : (
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gray-100">
-            <Package size={24} className="text-gray-400" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-gray-900">
-            {data.orderName || 'ไม่มีชื่อ'}
-          </p>
-          <p className="mt-0.5 text-sm font-semibold text-primary-600">
-            ฿{data.totalAmount.toLocaleString('th-TH')}
-          </p>
-          <div className="mt-1 flex items-center gap-2">
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                data.status === 'COMPLETED'
-                  ? 'bg-green-100 text-green-800'
-                  : data.status === 'CANCELLED' || data.status === 'REFUNDED'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-amber-100 text-amber-800'
-              }`}
-            >
-              {statusLabel}
-            </span>
-            {data.trackingNumber && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <Truck size={12} />
-                {data.carrier ? `${data.carrier}: ` : ''}
-                {data.trackingNumber}
+      <Link
+        href={`/orders/${data.orderId}`}
+        className={`block ${canPay ? '' : 'hover:border-gray-300'}`}
+      >
+        <div className="flex gap-3 p-3">
+          {data.orderImageUrl ? (
+            <img
+              src={data.orderImageUrl}
+              alt={data.orderName || 'Order'}
+              className="h-16 w-16 shrink-0 rounded-xl object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gray-100">
+              <Package size={24} className="text-gray-400" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-gray-900">
+              {data.orderName || 'ไม่มีชื่อ'}
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-primary-600">
+              ฿{data.totalAmount.toLocaleString('th-TH')}
+            </p>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                  data.status === 'COMPLETED'
+                    ? 'bg-green-100 text-green-800'
+                    : data.status === 'CANCELLED' || data.status === 'REFUNDED'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-amber-100 text-amber-800'
+                }`}
+              >
+                {statusLabel}
               </span>
-            )}
+              {data.trackingNumber && (
+                <span className="flex items-center gap-1 text-xs text-gray-500">
+                  <Truck size={12} />
+                  {data.carrier ? `${data.carrier}: ` : ''}
+                  {data.trackingNumber}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {canPay && (
+        <div className="border-t border-gray-200 p-3">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onPay?.();
+            }}
+            className="w-full rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
+          >
+            ชำระเงิน
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
