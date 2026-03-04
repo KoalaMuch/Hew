@@ -1,0 +1,204 @@
+{
+  "uid": "hew-oauth-auth",
+  "title": "OAuth Authentication",
+  "tags": ["hew", "auth", "oauth"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "OAuth Callback Success Rate",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"3..\"}[1h])) / sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[1h])) * 100",
+          "legendFormat": "Success %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "graphMode": "area", "textMode": "value" }
+    },
+    {
+      "id": 2,
+      "title": "OAuth Callbacks (total/1h)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[1h]))",
+          "legendFormat": "Callbacks"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": []
+      },
+      "options": { "graphMode": "area" }
+    },
+    {
+      "id": 3,
+      "title": "OAuth Redirects (total/1h)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/redirect\"}[1h]))",
+          "legendFormat": "Redirects"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": []
+      },
+      "options": { "graphMode": "area" }
+    },
+    {
+      "id": 4,
+      "title": "OAuth Callback Errors (total/1h)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"4..|5..\"}[1h]))",
+          "legendFormat": "Errors"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "graphMode": "area" }
+    },
+    {
+      "id": 5,
+      "title": "OAuth Callback Rate (Success vs Error)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"3..\"}[5m]))",
+          "legendFormat": "Success (3xx redirect)"
+        },
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"4..|5..\"}[5m]))",
+          "legendFormat": "Error (4xx/5xx)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "fillOpacity": 20, "lineWidth": 2 }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "title": "OAuth Callback Response Time (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[5m])))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[5m])))",
+          "legendFormat": "p50"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "fillOpacity": 10, "lineWidth": 2 }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "title": "OAuth Callback Status Code Distribution",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (http_response_status_code) (increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[24h]))",
+          "legendFormat": "{{http_response_status_code}}"
+        }
+      ],
+      "options": { "legend": { "displayMode": "table", "placement": "right" } }
+    },
+    {
+      "id": 8,
+      "title": "Recent OAuth Error Logs",
+      "type": "logs",
+      "gridPos": { "h": 12, "w": 16, "x": 8, "y": 13 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{container=~\".*api.*\"} |~ \"(?i)(oauth|google|line|facebook|apple|auth.*(fail|error))\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 9,
+      "title": "OAuth Error Traces",
+      "description": "Click a trace ID to view full span details in Tempo",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 25 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [
+        {
+          "queryType": "traceqlSearch",
+          "filters": [
+            { "id": "service-name", "tag": "service.name", "operator": "=", "value": ["hew-api"], "scope": "resource" },
+            { "id": "span-name", "tag": "name", "operator": "=~", "value": "auth", "scope": "span" },
+            { "id": "status", "tag": "status", "operator": "=", "value": "error", "scope": "intrinsic" }
+          ],
+          "limit": 20,
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
