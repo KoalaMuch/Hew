@@ -25,15 +25,14 @@ if [ -z "$AUTH" ]; then
   exit 1
 fi
 
-if [[ "$AUTH" == *":"* ]]; then
-  AUTH_HEADER="-u $AUTH"
-else
-  AUTH_HEADER="-H \"Authorization: Bearer $AUTH\""
+IS_BASIC_AUTH=false
+if [[ "$AUTH" == *":"* ]] && [[ "$AUTH" != glsa_* ]] && [[ "$AUTH" != eyJ* ]]; then
+  IS_BASIC_AUTH=true
 fi
 
 call() {
   local method="$1" path="$2" data="$3"
-  if [[ "$AUTH" == *":"* ]]; then
+  if [ "$IS_BASIC_AUTH" = true ]; then
     if [ -n "$data" ]; then
       curl -sS -X "$method" "${GRAFANA_URL}${path}" -u "$AUTH" -H "Content-Type: application/json" -d "$data"
     else
