@@ -16,7 +16,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_response_status_code=~\"5..\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_status_code=~\"5..\"}[5m]))",
           "legendFormat": "5xx/s"
         }
       ],
@@ -37,7 +37,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_response_status_code=~\"4..\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_status_code=~\"4..\"}[5m]))",
           "legendFormat": "4xx/s"
         }
       ],
@@ -58,7 +58,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "topk(15, sum by (http_route, http_response_status_code) (increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_response_status_code=~\"4..|5..\"}[1h])))",
+          "expr": "topk(15, sum by (http_route, http_status_code) (increase(http_server_duration_milliseconds_count{http_status_code=~\"4..|5..\"}[1h])))",
           "format": "table",
           "instant": true
         }

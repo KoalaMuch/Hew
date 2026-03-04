@@ -16,7 +16,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"3..\"}[1h])) / sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[1h])) * 100",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/callback\", http_status_code=~\"3..\"}[1h])) / sum(rate(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/callback\"}[1h])) * 100",
           "legendFormat": "Success %"
         }
       ],
@@ -43,7 +43,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[1h]))",
+          "expr": "sum(increase(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/callback\"}[1h]))",
           "legendFormat": "Callbacks"
         }
       ],
@@ -61,7 +61,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/redirect\"}[1h]))",
+          "expr": "sum(increase(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/redirect\"}[1h]))",
           "legendFormat": "Redirects"
         }
       ],
@@ -79,7 +79,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"4..|5..\"}[1h]))",
+          "expr": "sum(increase(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/callback\", http_status_code=~\"4..|5..\"}[1h]))",
           "legendFormat": "Errors"
         }
       ],
@@ -105,11 +105,11 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"3..\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/callback\", http_status_code=~\"3..\"}[5m]))",
           "legendFormat": "Success (3xx redirect)"
         },
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\", http_response_status_code=~\"4..|5..\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/callback\", http_status_code=~\"4..|5..\"}[5m]))",
           "legendFormat": "Error (4xx/5xx)"
         }
       ],
@@ -129,11 +129,11 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_duration_milliseconds_bucket{http_route=~\"/api/auth/:provider/callback\"}[5m]))) / 1000",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_duration_milliseconds_bucket{http_route=~\"/api/auth/:provider/callback\"}[5m]))) / 1000",
           "legendFormat": "p50"
         }
       ],
@@ -153,8 +153,8 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum by (http_response_status_code) (increase(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"/api/auth/:provider/callback\"}[24h]))",
-          "legendFormat": "{{http_response_status_code}}"
+          "expr": "sum by (http_status_code) (increase(http_server_duration_milliseconds_count{http_route=~\"/api/auth/:provider/callback\"}[24h]))",
+          "legendFormat": "{{http_status_code}}"
         }
       ],
       "options": { "legend": { "displayMode": "table", "placement": "right" } }

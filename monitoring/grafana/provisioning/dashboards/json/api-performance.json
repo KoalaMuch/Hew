@@ -13,7 +13,7 @@
         "name": "http_route",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-        "query": "label_values(http_server_request_duration_seconds_count{service_name=\"hew-api\"}, http_route)",
+        "query": "label_values(http_server_duration_milliseconds_count, http_route)",
         "refresh": 2,
         "includeAll": true,
         "multi": true,
@@ -30,7 +30,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count[5m]))",
           "legendFormat": "Total req/s"
         }
       ],
@@ -50,11 +50,11 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_response_status_code=~\"4..|5..\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_status_code=~\"4..|5..\"}[5m]))",
           "legendFormat": "4xx+5xx/s"
         },
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_response_status_code=~\"5..\"}[5m]))",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_status_code=~\"5..\"}[5m]))",
           "legendFormat": "5xx/s"
         }
       ],
@@ -74,15 +74,15 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_duration_milliseconds_bucket[5m]))) / 1000",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_duration_milliseconds_bucket[5m]))) / 1000",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_duration_milliseconds_bucket[5m]))) / 1000",
           "legendFormat": "p99"
         }
       ],
@@ -102,7 +102,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_route=~\"$http_route\"}[5m]))",
+          "expr": "sum by (http_route) (rate(http_server_duration_milliseconds_count{http_route=~\"$http_route\"}[5m]))",
           "legendFormat": "{{http_route}}"
         }
       ],
@@ -122,7 +122,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "topk(15, sum by (http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=\"hew-api\", http_response_status_code=~\"4..|5..\"}[1h])))",
+          "expr": "topk(15, sum by (http_route, http_status_code) (rate(http_server_duration_milliseconds_count{http_status_code=~\"4..|5..\"}[1h])))",
           "format": "table",
           "instant": true
         }
@@ -139,7 +139,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "topk(10, histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=\"hew-api\"}[5m]))))",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_duration_milliseconds_bucket[5m])))) / 1000",
           "legendFormat": "{{http_route}}",
           "instant": true
         }
@@ -167,8 +167,8 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum by (http_response_status_code) (increase(http_server_request_duration_seconds_count{service_name=\"hew-api\"}[1h]))",
-          "legendFormat": "{{http_response_status_code}}"
+          "expr": "sum by (http_status_code) (increase(http_server_duration_milliseconds_count[1h]))",
+          "legendFormat": "{{http_status_code}}"
         }
       ],
       "options": { "legend": { "displayMode": "table", "placement": "right" } }
@@ -181,8 +181,8 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum by (http_request_method) (rate(http_server_request_duration_seconds_count{service_name=\"hew-api\"}[5m]))",
-          "legendFormat": "{{http_request_method}}"
+          "expr": "sum by (http_method) (rate(http_server_duration_milliseconds_count[5m]))",
+          "legendFormat": "{{http_method}}"
         }
       ],
       "fieldConfig": {
@@ -192,23 +192,22 @@
     },
     {
       "id": 9,
-      "title": "Active HTTP Connections",
+      "title": "Request Volume (last 1h)",
       "type": "stat",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(http_server_active_requests{service_name=\"hew-api\"})",
-          "legendFormat": "Active"
+          "expr": "sum(increase(http_server_duration_milliseconds_count[1h]))",
+          "legendFormat": "Requests"
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "short",
           "thresholds": {
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 50 },
-              { "color": "red", "value": 100 }
+              { "color": "blue", "value": null }
             ]
           }
         },

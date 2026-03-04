@@ -139,60 +139,79 @@
     },
     {
       "id": 6,
-      "title": "PostgreSQL Active Connections",
-      "type": "timeseries",
+      "title": "PostgreSQL Up/Down",
+      "type": "stat",
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "pg_stat_activity_count{job=\"integrations/postgres\"}",
-          "legendFormat": "{{state}}"
+          "expr": "pg_up{job=\"integrations/postgres\"}",
+          "legendFormat": "PostgreSQL"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "custom": { "fillOpacity": 20, "lineWidth": 2 }
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "UP", "color": "green" }, "0": { "text": "DOWN", "color": "red" } } }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
         },
         "overrides": []
-      }
+      },
+      "options": { "graphMode": "none", "textMode": "value" }
     },
     {
       "id": 7,
-      "title": "PostgreSQL Database Size",
-      "type": "stat",
+      "title": "Node.js Event Loop Delay (p99)",
+      "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "pg_database_size_bytes{job=\"integrations/postgres\", datname!~\"template.*\"}",
-          "legendFormat": "{{datname}}"
+          "expr": "nodejs_eventloop_delay_p99_seconds * 1000",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "nodejs_eventloop_delay_p50_seconds * 1000",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "nodejs_eventloop_delay_mean_seconds * 1000",
+          "legendFormat": "mean"
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "bytes" },
+        "defaults": {
+          "unit": "ms",
+          "custom": { "fillOpacity": 10, "lineWidth": 2 }
+        },
         "overrides": []
       }
     },
     {
       "id": 8,
-      "title": "PostgreSQL Transactions / sec",
+      "title": "V8 Heap Memory",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(pg_stat_database_xact_commit{job=\"integrations/postgres\"}[5m]))",
-          "legendFormat": "commits/s"
+          "expr": "v8js_memory_heap_used_bytes",
+          "legendFormat": "Used"
         },
         {
-          "expr": "sum(rate(pg_stat_database_xact_rollback{job=\"integrations/postgres\"}[5m]))",
-          "legendFormat": "rollbacks/s"
+          "expr": "v8js_memory_heap_limit_bytes",
+          "legendFormat": "Limit"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
+          "unit": "bytes",
           "custom": { "fillOpacity": 15, "lineWidth": 2 }
         },
         "overrides": []
