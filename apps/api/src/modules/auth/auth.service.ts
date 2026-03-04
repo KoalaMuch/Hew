@@ -178,6 +178,16 @@ export class AuthService {
       }
     }
 
+    const existingSession = await this.prisma.session.findFirst({
+      where: { registeredUserId: user.id },
+    });
+    if (existingSession && existingSession.id !== sessionId) {
+      await this.prisma.session.update({
+        where: { id: existingSession.id },
+        data: { registeredUserId: null },
+      });
+    }
+
     const userWithAvatar = await this.prisma.registeredUser.findUnique({
       where: { id: user.id },
       select: { avatarUrl: true },
